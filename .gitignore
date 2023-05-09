@@ -1,0 +1,4 @@
+node_modules/*
+diagrams.html
+.vscode/*
+dist/*
