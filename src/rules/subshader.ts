@@ -10,10 +10,9 @@ export function RuleSubShader(this: CstParser) {
   this.CONSUME(Symbols.LCurly);
   this.MANY(() => {
     this.OR([
+      { ALT: () => this.SUBRULE($.RuleShaderPass) },
       { ALT: () => this.SUBRULE($.RuleTag) },
-      { ALT: () => this.SUBRULE($.SubShaderPropertyAssignment) },
-      { ALT: () => this.SUBRULE($.RuleStruct) },
-      { ALT: () => this.SUBRULE($.RuleStatePropertyAssign) },
+      { ALT: () => this.SUBRULE($.RuleRenderStateDeclaration) },
     ]);
   });
   this.CONSUME(Symbols.RCurly);

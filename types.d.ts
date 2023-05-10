@@ -9,17 +9,21 @@ interface IShaderParser {
   RuleRange: any;
   RuleProteryItem: any;
   RuleProperty: any;
+  RulePropertyItemType: any;
+  RulePropertyItemValue: any;
 
   RuleShader: any;
   RuleSubShader: any;
+  RuleShaderPass: any;
 
   RuleTag: any;
-  SubShaderPropertyAssignment: any;
+  SubShaderPassPropertyAssignment: any;
 
   RuleStruct: any;
   RuleDeclarationType: any;
   RuleStateProperty: any;
   RuleAssignableValue: any;
+  RuleRenderStateDeclaration: any;
   RuleStatePropertyAssign: any;
   RuleRenderStateType: any;
   RuleNumber: any;
@@ -29,6 +33,7 @@ interface IShaderParser {
   RuleRelationOperator: any;
   RuleVariableType: any;
 
+  RuleFn: any;
   RuleFnParenthesisExpr: any;
   RuleFnAddExpr: any;
   RuleFnPowExpr: any;
@@ -40,6 +45,7 @@ interface IShaderParser {
   RuleFnExpression: any;
   RuleFnVariableDeclaration: any;
   RuleFnStatement: any;
+  RuleFnAssignStatement: any;
   RuleFnBlockStatement: any;
   RuleFnRelationExpr: any;
   RuleFnConditionStatement: any;

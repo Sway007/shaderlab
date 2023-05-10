@@ -2,7 +2,7 @@ import { CstParser } from 'chevrotain';
 import { Symbols, Values } from '../tokens';
 import { ALL_RULES, consume } from './common';
 
-export function RuleTuple(this: CstParser, type: 'int' | 'float', num: number) {
+function RuleTuple(this: CstParser, type: 'int' | 'float', num: number) {
   const valueToken = type === 'int' ? Values.ValueInt : Values.ValueFloat;
   this.CONSUME2(Symbols.LBracket);
   for (let i = 0; i < num - 1; i++) {

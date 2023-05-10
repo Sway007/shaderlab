@@ -9,3 +9,8 @@ export const glsl_vec3 = createToken({ name: 'glsl_vec3', pattern: /vec3/ });
 export const glsl_vec4 = createToken({ name: 'glsl_vec4', pattern: /vec4/ });
 
 export const glsl_float = createToken({ name: 'glsl_float', pattern: /float/ });
+
+export const glsl_sampler2D = createToken({
+  name: 'glsl_sampler2D',
+  pattern: /glsl_sampler2D/,
+});

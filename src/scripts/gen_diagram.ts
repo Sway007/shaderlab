@@ -14,7 +14,7 @@ export default function generateDiagram(opts?: {
   const serializeGrammar = parser.getSerializedGastProductions();
   const html = createSyntaxDiagramsCode(
     serializeGrammar.filter((grammer) =>
-      (opts?.pattern ?? /^?!(Tuple|Assignment)/).test(
+      (opts?.pattern ?? /^(?<!(Tuple|Assignment))/).test(
         (grammer as any).name as string
       )
     )

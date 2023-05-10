@@ -2,7 +2,7 @@ import { CstParser, TokenType } from 'chevrotain';
 import { Keywords, Others, Symbols } from '../tokens';
 import { ALL_RULES } from './common';
 
-function SubShaderPropertyAssignment(this: CstParser) {
+function SubShaderPassPropertyAssignment(this: CstParser) {
   const $ = this as any as IShaderParser;
 
   this.OR([
@@ -13,9 +13,8 @@ function SubShaderPropertyAssignment(this: CstParser) {
 
   this.CONSUME(Symbols.Equal);
   this.CONSUME(Others.Identifier);
-  this.CONSUME(Symbols.Semicolon);
 }
 ALL_RULES.push({
-  name: 'SubShaderPropertyAssignment',
-  fn: SubShaderPropertyAssignment,
+  name: 'SubShaderPassPropertyAssignment',
+  fn: SubShaderPassPropertyAssignment,
 });

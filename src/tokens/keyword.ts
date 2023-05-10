@@ -9,6 +9,8 @@ const Tags = createKeywordToken('Tags');
 
 export const If = createKeywordToken('if');
 export const Else = createKeywordToken('else');
+export const Discard = createKeywordToken('discard');
+export const Void = createKeywordToken('void');
 
 const BlendState = createKeywordToken('BlendState');
 const DepthState = createKeywordToken('DepthState');
@@ -30,7 +32,6 @@ const FragmentShader = createKeywordToken('FragmentShader');
 const Include = createKeywordToken('Include', { pattern: /#include/ });
 
 const struct = createKeywordToken('struct');
-const Attributes = createKeywordToken('Attributes');
 
 // math
 const Pow = createKeywordToken('pow');
@@ -53,6 +54,5 @@ export {
   TagKeywordsList,
   Include,
   struct,
-  Attributes,
   Pow,
 };

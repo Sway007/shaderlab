@@ -8,10 +8,12 @@ export function RuleShader(this: CstParser) {
   this.CONSUME(Keywords.Shader);
   this.CONSUME(Values.ValueString);
   this.CONSUME(Symbols.LCurly);
-  this.OR([
-    { ALT: () => this.SUBRULE($.RuleProperty) },
-    { ALT: () => this.SUBRULE($.RuleSubShader) },
-  ]);
+  this.MANY(() => {
+    this.OR([
+      { ALT: () => this.SUBRULE($.RuleProperty) },
+      { ALT: () => this.SUBRULE($.RuleSubShader) },
+    ]);
+  });
   this.CONSUME(Symbols.RCurly);
 }
 

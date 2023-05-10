@@ -1,5 +1,5 @@
 import { CstParser } from 'chevrotain';
-import { Keywords, Others, Symbols } from '../../tokens';
+import { Keywords, Others, Symbols, GLKeywords } from '../../tokens';
 import { ALL_RULES } from '../common';
 
 function RuleFnVariableDeclaration(this: CstParser) {
@@ -24,11 +24,29 @@ function RuleFnStatement(this: CstParser) {
     { ALT: () => this.SUBRULE($.RuleFnCall) },
     { ALT: () => this.SUBRULE($.RuleFnVariableDeclaration) },
     { ALT: () => this.SUBRULE($.RuleFnConditionStatement) },
+    { ALT: () => this.SUBRULE($.RuleFnAssignStatement) },
   ]);
 }
 ALL_RULES.push({
   name: 'RuleFnStatement',
   fn: RuleFnStatement,
+});
+
+function RuleFnAssignStatement(this: CstParser) {
+  const $ = this as any as IShaderParser;
+
+  this.OR([
+    ...Object.values(GLKeywords).map((item) => ({
+      ALT: () => this.CONSUME(item),
+    })),
+    { ALT: () => this.CONSUME(Others.Identifier) },
+  ]);
+  this.CONSUME(Symbols.Equal);
+  this.SUBRULE($.RuleFnExpression);
+}
+ALL_RULES.push({
+  name: 'RuleFnAssignStatement',
+  fn: RuleFnAssignStatement,
 });
 
 function RuleFnBlockStatement(this: CstParser) {

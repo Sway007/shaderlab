@@ -1,5 +1,6 @@
 import './shader';
 import './subshader';
+import './shaderPass';
 import './common';
 import './property';
 import './tupe';

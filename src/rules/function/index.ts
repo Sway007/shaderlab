@@ -1,5 +1,5 @@
 import { CstParser } from 'chevrotain';
-import { Others, Symbols, Values } from '../../tokens';
+import { Keywords, Others, Symbols } from '../../tokens';
 import { ALL_RULES } from '../common';
 
 export * from './expression';
@@ -8,7 +8,10 @@ export * from './statement';
 function RuleFn(this: CstParser) {
   const $ = this as any as IShaderParser;
 
-  this.SUBRULE($.RuleVariableType);
+  this.OR([
+    { ALT: () => this.SUBRULE($.RuleVariableType) },
+    { ALT: () => this.CONSUME(Keywords.Void) },
+  ]);
   this.CONSUME1(Others.Identifier);
   this.CONSUME1(Symbols.LBracket);
   this.MANY_SEP({

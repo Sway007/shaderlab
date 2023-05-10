@@ -25,7 +25,7 @@ export default class ShaderParser extends CstParser {
   lexer: Lexer;
 
   constructor() {
-    super(allTokens);
+    super(allTokens, { maxLookahead: 8 });
     this.lexer = new Lexer(allTokens);
     ALL_RULES.forEach((rule) => {
       this.RULE(rule.name, rule.fn.bind(this));

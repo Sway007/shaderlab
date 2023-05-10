@@ -28,19 +28,6 @@ function RuleRenderStateType(this: CstParser) {
 }
 ALL_RULES.push({ name: 'RuleRenderStateType', fn: RuleRenderStateType });
 
-function RuleRenderStateDeclare(this: CstParser) {
-  const $ = this as any as IShaderParser;
-
-  this.SUBRULE($.RuleRenderStateType);
-  this.CONSUME1(Others.Identifier);
-  this.CONSUME(Symbols.LCurly);
-  this.MANY(() => {
-    this.SUBRULE($.RuleStatePropertyAssign);
-  });
-  this.CONSUME(Symbols.RCurly);
-}
-ALL_RULES.push({ name: 'RuleRenderStateDeclare', fn: RuleRenderStateDeclare });
-
 function RuleStateProperty(this: CstParser) {
   this.OR([
     { ALT: () => this.CONSUME(Keywords.Enabled) },
@@ -51,24 +38,43 @@ function RuleStateProperty(this: CstParser) {
 ALL_RULES.push({ name: 'RuleStateProperty', fn: RuleStateProperty });
 
 function RuleAssignableValue(this: CstParser) {
+  const $ = this as any as IShaderParser;
+
   this.OR([
     { ALT: () => this.CONSUME(Values.ValueTrue) },
     { ALT: () => this.CONSUME(Values.ValueFalse) },
     { ALT: () => this.CONSUME1(Values.ValueInt) },
     { ALT: () => this.CONSUME(Values.ValueString) },
     { ALT: () => this.CONSUME(Values.ValueFloat) },
+    { ALT: () => this.SUBRULE($.RuleFnCall) },
+    { ALT: () => this.CONSUME(Others.Identifier) },
   ]);
 }
 ALL_RULES.push({ name: 'RuleAssignableValue', fn: RuleAssignableValue });
 
+function RuleRenderStateDeclaration(this: CstParser) {
+  const $ = this as any as IShaderParser;
+
+  this.SUBRULE($.RuleRenderStateType);
+  this.CONSUME(Others.Identifier);
+  this.CONSUME(Symbols.LCurly);
+  this.MANY(() => {
+    this.SUBRULE($.RuleStatePropertyAssign);
+    this.CONSUME(Symbols.Semicolon);
+  });
+  this.CONSUME(Symbols.RCurly);
+}
+ALL_RULES.push({
+  name: 'RuleRenderStateDeclaration',
+  fn: RuleRenderStateDeclaration,
+});
+
 function RuleStatePropertyAssign(this: CstParser) {
   const $ = this as any as IShaderParser;
 
-  this.MANY(() => {
-    this.SUBRULE($.RuleStateProperty);
-    this.CONSUME(Symbols.Equal);
-    this.SUBRULE($.RuleAssignableValue);
-  });
+  this.SUBRULE($.RuleStateProperty);
+  this.CONSUME(Symbols.Equal);
+  this.SUBRULE($.RuleAssignableValue);
 }
 ALL_RULES.push({
   name: 'RuleStatePropertyAssign',

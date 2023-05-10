@@ -4,7 +4,10 @@
   "description": "Galacean shader parser",
   "main": "index.js",
   "scripts": {
-    "diagram": "./bin/gen_diagram.ts"
+    "diagram": "./bin/gen_diagram.ts",
+    "dts": "./bin/gen_dts.ts",
+    "update": "./bin/gen_diagram.ts && ./bin/gen_dts.ts",
+    "example": "ts-node example/visit.ts"
   },
   "keywords": [
     "galacean",

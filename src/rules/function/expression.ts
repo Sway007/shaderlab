@@ -1,5 +1,5 @@
 import { CstParser } from 'chevrotain';
-import { Keywords, Others, Symbols } from '../../tokens';
+import { Keywords, Others, Symbols, Types } from '../../tokens';
 import { ALL_RULES } from '../common';
 
 function RuleFnExpression(this: CstParser) {
@@ -42,6 +42,7 @@ function RuleFnAtomicExpr(this: CstParser) {
     { ALT: () => this.SUBRULE($.RuleNumber) },
     { ALT: () => this.SUBRULE($.RuleFnPowExpr) },
     { ALT: () => this.SUBRULE($.RuleFnCall) },
+    { ALT: () => this.CONSUME(Keywords.Discard) },
   ]);
 }
 ALL_RULES.push({ name: 'RuleFnAtomicExpr', fn: RuleFnAtomicExpr });
@@ -68,12 +69,17 @@ function RuleFnPowExpr(this: CstParser) {
 ALL_RULES.push({ name: 'RuleFnPowExpr', fn: RuleFnPowExpr });
 
 function RuleFnCall(this: CstParser) {
-  this.CONSUME(Others.Identifier);
+  const $ = this as any as IShaderParser;
+
+  this.OR([
+    ...Object.values(Types).map((item) => ({ ALT: () => this.CONSUME(item) })),
+    { ALT: () => this.CONSUME(Others.Identifier) },
+  ]);
   this.CONSUME1(Symbols.LBracket);
   this.MANY_SEP({
     SEP: Symbols.Comma,
     DEF: () => {
-      this.CONSUME1(Others.Identifier);
+      this.SUBRULE($.RuleAssignableValue);
     },
   });
   this.CONSUME(Symbols.RBracket);
