@@ -16,6 +16,8 @@ const Colon = createToken({ name: 'Colon', pattern: /:/, label: ':' });
 const Equal = createToken({ name: 'Equal', pattern: /=/, label: '=' });
 /** ; */
 const Semicolon = createToken({ name: 'Semicolon', pattern: /;/, label: ';' });
+/** . */
+export const Dot = createToken({ name: 'Dot', pattern: /\./, label: '.' });
 const Add = createToken({ name: 'Add', pattern: /\+/, label: '+' });
 const Minus = createToken({ name: 'Minus', pattern: /\-/, label: '-' });
 const Mutiply = createToken({ name: 'Multiply', pattern: /\*/, label: '*' });

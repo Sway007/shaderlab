@@ -16,4 +16,4 @@ if (parser.errors.length > 0) {
 const visitor = new ShaderVisitor();
 const ast = visitor.visit(cst);
 
-console.log(ast);
+console.dir(ast, { depth: null });

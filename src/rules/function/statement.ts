@@ -1,5 +1,5 @@
 import { CstParser } from 'chevrotain';
-import { Keywords, Others, Symbols, GLKeywords } from '../../tokens';
+import { Keywords, Others, Symbols, GLKeywords, Values } from '../../tokens';
 import { ALL_RULES } from '../common';
 
 function RuleFnVariableDeclaration(this: CstParser) {
@@ -22,9 +22,11 @@ function RuleFnStatement(this: CstParser) {
 
   this.OR([
     { ALT: () => this.SUBRULE($.RuleFnCall) },
+    { ALT: () => this.SUBRULE($.RuleFnReturnStatement) },
     { ALT: () => this.SUBRULE($.RuleFnVariableDeclaration) },
     { ALT: () => this.SUBRULE($.RuleFnConditionStatement) },
     { ALT: () => this.SUBRULE($.RuleFnAssignStatement) },
+    { ALT: () => this.CONSUME(Keywords.Discard) },
   ]);
 }
 ALL_RULES.push({
@@ -35,12 +37,7 @@ ALL_RULES.push({
 function RuleFnAssignStatement(this: CstParser) {
   const $ = this as any as IShaderParser;
 
-  this.OR([
-    ...Object.values(GLKeywords).map((item) => ({
-      ALT: () => this.CONSUME(item),
-    })),
-    { ALT: () => this.CONSUME(Others.Identifier) },
-  ]);
+  this.SUBRULE($.RuleFnAssignLO);
   this.CONSUME(Symbols.Equal);
   this.SUBRULE($.RuleFnExpression);
 }
@@ -48,6 +45,30 @@ ALL_RULES.push({
   name: 'RuleFnAssignStatement',
   fn: RuleFnAssignStatement,
 });
+
+function RuleFnAssignLO(this: CstParser) {
+  const $ = this as any as IShaderParser;
+
+  this.OR([
+    ...Object.values(GLKeywords).map((item) => ({
+      ALT: () => this.CONSUME(item),
+    })),
+    { ALT: () => this.SUBRULE($.RuleFnVariable) },
+  ]);
+}
+ALL_RULES.push({
+  name: 'RuleFnAssignLO',
+  fn: RuleFnAssignLO,
+});
+
+function RuleFnVariable(this: CstParser) {
+  this.CONSUME(Others.Identifier);
+  this.MANY(() => {
+    this.CONSUME(Symbols.Dot);
+    this.CONSUME1(Others.Identifier);
+  });
+}
+ALL_RULES.push({ name: 'RuleFnVariable', fn: RuleFnVariable });
 
 function RuleFnBlockStatement(this: CstParser) {
   const $ = this as any as IShaderParser;
@@ -74,10 +95,26 @@ function RuleFnConditionStatement(this: CstParser) {
   });
   this.OPTION1(() => {
     this.CONSUME1(Keywords.Else);
-    this.SUBRULE1($.RuleFnBlockStatement);
   });
+  this.SUBRULE1($.RuleFnBlockStatement);
 }
 ALL_RULES.push({
   name: 'RuleFnConditionStatement',
   fn: RuleFnConditionStatement,
 });
+
+function RuleFnReturnStatement(this: CstParser) {
+  const $ = this as any as IShaderParser;
+
+  this.CONSUME(Keywords.Return);
+  this.SUBRULE($.RuleFnReturnVariable);
+}
+ALL_RULES.push({ name: 'RuleFnReturnStatement', fn: RuleFnReturnStatement });
+
+function RuleFnReturnVariable(this: CstParser) {
+  this.OR([
+    ...Object.values(Values).map((item) => ({ ALT: () => this.CONSUME(item) })),
+    { ALT: () => this.CONSUME(Others.Identifier) },
+  ]);
+}
+ALL_RULES.push({ name: 'RuleFnReturnVariable', fn: RuleFnReturnVariable });

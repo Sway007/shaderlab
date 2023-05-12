@@ -11,6 +11,7 @@ export const If = createKeywordToken('if');
 export const Else = createKeywordToken('else');
 export const Discard = createKeywordToken('discard');
 export const Void = createKeywordToken('void');
+export const Return = createKeywordToken('return');
 
 const BlendState = createKeywordToken('BlendState');
 const DepthState = createKeywordToken('DepthState');

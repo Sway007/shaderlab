@@ -4,19 +4,12 @@ import { ALL_RULES } from './common';
 import { ValueFloat, ValueInt } from '../tokens/value';
 
 function RuleDeclare(this: CstParser) {
-  this.OR([
-    { ALT: () => this.CONSUME(Types.glsl_float) },
-    { ALT: () => this.CONSUME(Types.glsl_vec2) },
-    { ALT: () => this.CONSUME(Types.glsl_vec2f) },
-    { ALT: () => this.CONSUME(Types.glsl_vec3) },
-    { ALT: () => this.CONSUME(Types.glsl_vec3f) },
-    { ALT: () => this.CONSUME(Types.glsl_vec4) },
-    { ALT: () => this.CONSUME(Types.glsl_vec4f) },
-    { ALT: () => this.CONSUME(Others.Identifier) },
-  ]);
+  const $ = this as any as IShaderParser;
+
+  this.SUBRULE($.RuleVariableType);
   this.CONSUME2(Others.Identifier);
 }
-ALL_RULES.push({ name: 'RuleDeclarationType', fn: RuleDeclare });
+ALL_RULES.push({ name: 'RuleDeclaration', fn: RuleDeclare });
 
 function RuleRenderStateType(this: CstParser) {
   this.OR([

@@ -42,7 +42,7 @@ function RuleFnAtomicExpr(this: CstParser) {
     { ALT: () => this.SUBRULE($.RuleNumber) },
     { ALT: () => this.SUBRULE($.RuleFnPowExpr) },
     { ALT: () => this.SUBRULE($.RuleFnCall) },
-    { ALT: () => this.CONSUME(Keywords.Discard) },
+    { ALT: () => this.CONSUME(Others.Identifier) },
   ]);
 }
 ALL_RULES.push({ name: 'RuleFnAtomicExpr', fn: RuleFnAtomicExpr });
@@ -71,10 +71,7 @@ ALL_RULES.push({ name: 'RuleFnPowExpr', fn: RuleFnPowExpr });
 function RuleFnCall(this: CstParser) {
   const $ = this as any as IShaderParser;
 
-  this.OR([
-    ...Object.values(Types).map((item) => ({ ALT: () => this.CONSUME(item) })),
-    { ALT: () => this.CONSUME(Others.Identifier) },
-  ]);
+  this.SUBRULE($.RuleFnCallVariable);
   this.CONSUME1(Symbols.LBracket);
   this.MANY_SEP({
     SEP: Symbols.Comma,
@@ -85,6 +82,14 @@ function RuleFnCall(this: CstParser) {
   this.CONSUME(Symbols.RBracket);
 }
 ALL_RULES.push({ name: 'RuleFnCall', fn: RuleFnCall });
+
+function RuleFnCallVariable(this: CstParser) {
+  this.OR([
+    ...Object.values(Types).map((item) => ({ ALT: () => this.CONSUME(item) })),
+    { ALT: () => this.CONSUME(Others.Identifier) },
+  ]);
+}
+ALL_RULES.push({ name: 'RuleFnCallVariable', fn: RuleFnCallVariable });
 
 function RuleFnRelationExpr(this: CstParser) {
   const $ = this as any as IShaderParser;

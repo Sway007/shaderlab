@@ -8,7 +8,7 @@ export default function (opts?: { outDir?: string }) {
   const productions = parser.getGAstProductions();
   const dtsContent = generateCstDts(productions);
   const out = opts?.outDir ?? path.resolve(__dirname, '..');
-  const dtsPath = path.resolve(out, './cst.d.ts');
+  const dtsPath = path.resolve(out, './types.ts');
   fs.writeFileSync(dtsPath, dtsContent, { flag: 'w' });
   console.log('dst written to file ', dtsPath);
 }

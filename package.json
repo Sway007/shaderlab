@@ -7,7 +7,8 @@
     "diagram": "./bin/gen_diagram.ts",
     "dts": "./bin/gen_dts.ts",
     "update": "./bin/gen_diagram.ts && ./bin/gen_dts.ts",
-    "example": "ts-node example/visit.ts"
+    "example": "ts-node example/visit.ts",
+    "build": "rollup -c"
   },
   "keywords": [
     "galacean",
@@ -16,12 +17,14 @@
   "author": "yansw007@gmail.com",
   "license": "ISC",
   "dependencies": {
-    "@types/node": "^18.16.1",
     "chevrotain": "^10.5.0"
   },
   "devDependencies": {
     "@chevrotain/types": "^10.5.0",
+    "@rollup/plugin-commonjs": "^24.1.0",
+    "@rollup/plugin-node-resolve": "^15.0.2",
     "@rollup/plugin-typescript": "^11.1.0",
+    "@types/node": "^18.16.1",
     "rollup": "^3.21.0",
     "rollup-plugin-dts": "^5.3.0",
     "rollup-plugin-preserve-shebang": "^1.0.1",

@@ -15,7 +15,7 @@ Shader "DemoShader"
   {
     // -------------------- SubShader Tag 区（可选）--------
     // 对应引擎 SubShader tags
-    Tags { ReplacementTag = "Opaque"} 
+    Tags { ReplacementTag = "Opaque",PipelineStage = "test" } 
     // ---------------------------------------------------
 
     
@@ -77,15 +77,19 @@ Shader "DemoShader"
         DestColorBlendFactor = material_DstBlend;
       };
 
-      Varyings customVertex(Attributes input){
+      Varyings customVertex(Attributes input, int arg2){
         Varyings varying;
         varying.uv = vec2(1.0,2.0);
         gl_Position = vec4(1.0,1.0,1.0,1.0);
-        rerurn varying;
+        return varying;
       };
 
       void customFragment(Varyings input){
-        gl_FragColor = vec4(1.0,1.0,1.0,1.0);
+        if (var1 > 2) {
+          discard;
+        };
+        float v2 = 0.9;
+        gl_FragColor = vec4(1.0,1.0,v2,1.0);
       };
       // -----------------------------------------
     }

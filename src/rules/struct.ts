@@ -9,7 +9,7 @@ function RuleStruct(this: CstParser) {
   this.CONSUME(Others.Identifier);
   this.CONSUME(Symbols.LCurly);
   this.MANY(() => {
-    this.SUBRULE($.RuleDeclarationType);
+    this.SUBRULE($.RuleDeclaration);
     this.CONSUME(Symbols.Semicolon);
   });
   this.CONSUME(Symbols.RCurly);
