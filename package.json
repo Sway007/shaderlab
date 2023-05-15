@@ -2,13 +2,14 @@
   "name": "galacean-shader-parser",
   "version": "1.0.0",
   "description": "Galacean shader parser",
-  "main": "index.js",
+  "main": "dist/umd/index.js",
   "scripts": {
     "diagram": "./bin/gen_diagram.ts",
     "dts": "./bin/gen_dts.ts",
     "update": "./bin/gen_diagram.ts && ./bin/gen_dts.ts",
     "example": "ts-node example/visit.ts",
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "clear": "rm -rf dist/*"
   },
   "keywords": [
     "galacean",
