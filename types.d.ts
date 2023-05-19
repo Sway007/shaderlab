@@ -56,8 +56,17 @@ interface IShaderParser {
   RuleFnReturnStatement: any;
   RuleFnStatement: any;
   RuleFnAssignStatement: any;
+  RuleFnAssignmentOperator: any;
   RuleFnAssignLO: any;
   RuleFnBlockStatement: any;
   RuleFnRelationExpr: any;
   RuleFnConditionStatement: any;
+
+  RuleFnMacro: any;
+  RuleFnMacroCondition: any;
+  RuleFnMacroDefine: any;
+  RuleFnMacroInclude: any;
+  RuleFnMacroConditionDeclare: any;
+  RuleFnMacroConditionBranch: any;
+  RuleFnMacroConditionBranchDeclare: any;
 }

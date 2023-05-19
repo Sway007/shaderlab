@@ -40,7 +40,7 @@ function RuleAssignableValue(this: CstParser) {
     { ALT: () => this.CONSUME(Values.ValueString) },
     { ALT: () => this.CONSUME(Values.ValueFloat) },
     { ALT: () => this.SUBRULE($.RuleFnCall) },
-    { ALT: () => this.CONSUME(Others.Identifier) },
+    { ALT: () => this.SUBRULE($.RuleFnVariable) },
   ]);
 }
 ALL_RULES.push({ name: 'RuleAssignableValue', fn: RuleAssignableValue });

@@ -38,12 +38,24 @@ function RuleFnAssignStatement(this: CstParser) {
   const $ = this as any as IShaderParser;
 
   this.SUBRULE($.RuleFnAssignLO);
-  this.CONSUME(Symbols.Equal);
+  this.SUBRULE($.RuleFnAssignmentOperator);
   this.SUBRULE($.RuleFnExpression);
 }
 ALL_RULES.push({
   name: 'RuleFnAssignStatement',
   fn: RuleFnAssignStatement,
+});
+
+function RuleFnAssignmentOperator(this: CstParser) {
+  this.OR([
+    { ALT: () => this.CONSUME(Symbols.Equal) },
+    { ALT: () => this.CONSUME(Symbols.MultiEqual) },
+    { ALT: () => this.CONSUME(Symbols.DivideEqual) },
+  ]);
+}
+ALL_RULES.push({
+  name: 'RuleFnAssignmentOperator',
+  fn: RuleFnAssignmentOperator,
 });
 
 function RuleFnAssignLO(this: CstParser) {
@@ -112,9 +124,11 @@ function RuleFnReturnStatement(this: CstParser) {
 ALL_RULES.push({ name: 'RuleFnReturnStatement', fn: RuleFnReturnStatement });
 
 function RuleFnReturnVariable(this: CstParser) {
+  const $ = this as any as IShaderParser;
+
   this.OR([
     ...Object.values(Values).map((item) => ({ ALT: () => this.CONSUME(item) })),
-    { ALT: () => this.CONSUME(Others.Identifier) },
+    { ALT: () => this.SUBRULE($.RuleFnVariable) },
   ]);
 }
 ALL_RULES.push({ name: 'RuleFnReturnVariable', fn: RuleFnReturnVariable });

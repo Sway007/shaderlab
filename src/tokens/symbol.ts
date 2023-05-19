@@ -20,6 +20,16 @@ const Semicolon = createToken({ name: 'Semicolon', pattern: /;/, label: ';' });
 export const Dot = createToken({ name: 'Dot', pattern: /\./, label: '.' });
 const Add = createToken({ name: 'Add', pattern: /\+/, label: '+' });
 const Minus = createToken({ name: 'Minus', pattern: /\-/, label: '-' });
+const MultiEqual = createToken({
+  name: 'MultiEqual',
+  pattern: /\*=/,
+  label: '*=',
+});
+const DivideEqual = createToken({
+  name: 'DivideEqual',
+  pattern: /\/=/,
+  label: '/=',
+});
 const Mutiply = createToken({ name: 'Multiply', pattern: /\*/, label: '*' });
 const Divide = createToken({ name: 'Divide', pattern: /\//, label: '/' });
 export const GreaterThan = createToken({
@@ -44,6 +54,8 @@ export {
   Semicolon,
   Add,
   Minus,
+  MultiEqual,
+  DivideEqual,
   Mutiply,
   Divide,
 };

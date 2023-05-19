@@ -1,4 +1,5 @@
 import './shader';
+import './function';
 import './subshader';
 import './shaderPass';
 import './common';
@@ -8,7 +9,6 @@ import './tag';
 import './assignment';
 import './struct';
 import './expression';
-import './function';
 import './types';
 
 export { ALL_RULES } from './common';

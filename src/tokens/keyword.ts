@@ -30,12 +30,19 @@ const TagKeywordsList = [ReplacementTag, PipelineStage];
 const VertexShader = createKeywordToken('VertexShader');
 const FragmentShader = createKeywordToken('FragmentShader');
 
-const Include = createKeywordToken('Include', { pattern: /#include/ });
-
 const struct = createKeywordToken('struct');
 
 // math
 const Pow = createKeywordToken('pow');
+
+// macro
+const M_DEFINE = createKeywordToken('#define', { name: 'm_define' });
+const M_IFDEF = createKeywordToken('#ifdef', { name: 'm_ifdef' });
+const M_IFNDEF = createKeywordToken('#ifndef', { name: 'm_ifndef' });
+const M_ELSE = createKeywordToken('#else', { name: 'm_else' });
+const M_ELIF = createKeywordToken('#elif', { name: 'm_elif' });
+const M_ENDIF = createKeywordToken('#endif', { name: 'm_endif' });
+const M_INCLUDE = createKeywordToken('#include', { name: 'm_include' });
 
 export {
   Shader,
@@ -53,7 +60,13 @@ export {
   VertexShader,
   FragmentShader,
   TagKeywordsList,
-  Include,
   struct,
   Pow,
+  M_ENDIF,
+  M_IFNDEF,
+  M_IFDEF,
+  M_DEFINE,
+  M_ELIF,
+  M_ELSE,
+  M_INCLUDE,
 };

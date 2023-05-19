@@ -84,12 +84,35 @@ Shader "DemoShader"
         return varying;
       };
 
-      void customFragment(Varyings input){
-        if (var1 > 2) {
-          discard;
-        };
-        float v2 = 0.9;
-        gl_FragColor = vec4(1.0,1.0,v2,1.0);
+      void unlitFragment(Varyings input)
+      {
+        vec4 baseColor = material_BaseColor;
+
+        #ifdef MATERIAL_HAS_BASETEXTURE
+            vec4 textureColor = texture2D(material_BaseTexture, input.uv);
+            #ifndef ENGINE_IS_COLORSPACE_GAMMA
+                textureColor = gammaToLinear(textureColor);
+            #endif
+            baseColor *= textureColor;
+        #endif
+    
+        #ifdef MATERIAL_IS_ALPHA_CUTOFF
+            if( baseColor.a < material_AlphaCutoff ) {
+                discard;
+            };
+        #endif
+    
+        gl_FragColor = baseColor;
+    
+        #ifndef MATERIAL_IS_TRANSPARENT
+            gl_FragColor.a = 1.0;
+        #endif
+    
+        #include "FogFragment.glsl"
+    
+        #ifndef ENGINE_IS_COLORSPACE_GAMMA
+            gl_FragColor = linearToGamma(gl_FragColor);
+        #endif
       };
       // -----------------------------------------
     }

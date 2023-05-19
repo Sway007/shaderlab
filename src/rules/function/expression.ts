@@ -42,7 +42,7 @@ function RuleFnAtomicExpr(this: CstParser) {
     { ALT: () => this.SUBRULE($.RuleNumber) },
     { ALT: () => this.SUBRULE($.RuleFnPowExpr) },
     { ALT: () => this.SUBRULE($.RuleFnCall) },
-    { ALT: () => this.CONSUME(Others.Identifier) },
+    { ALT: () => this.SUBRULE($.RuleFnVariable) },
   ]);
 }
 ALL_RULES.push({ name: 'RuleFnAtomicExpr', fn: RuleFnAtomicExpr });

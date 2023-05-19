@@ -4,6 +4,7 @@ import { ALL_RULES } from '../common';
 
 export * from './expression';
 export * from './statement';
+export * from './macro';
 
 function RuleFn(this: CstParser) {
   const $ = this as any as IShaderParser;
@@ -44,8 +45,15 @@ function RuleFnBody(this: CstParser) {
   const $ = this as any as IShaderParser;
 
   this.MANY(() => {
-    this.SUBRULE($.RuleFnStatement);
-    this.CONSUME(Symbols.Semicolon);
+    this.OR([
+      { ALT: () => this.SUBRULE($.RuleFnMacro) },
+      {
+        ALT: () => {
+          this.SUBRULE($.RuleFnStatement);
+          this.CONSUME(Symbols.Semicolon);
+        },
+      },
+    ]);
   });
 }
 ALL_RULES.push({ name: 'RuleFnBody', fn: RuleFnBody });

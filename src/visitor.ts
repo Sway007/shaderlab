@@ -12,6 +12,10 @@ import {
   RuleFnConditionStatementCstChildren,
   RuleFnCstChildren,
   RuleFnExpressionCstChildren,
+  RuleFnMacroConditionBranchCstChildren,
+  RuleFnMacroConditionCstChildren,
+  RuleFnMacroCstChildren,
+  RuleFnMacroIncludeCstChildren,
   RuleFnMultiplicationExprCstChildren,
   RuleFnParenthesisExprCstChildren,
   RuleFnRelationExprCstChildren,
@@ -116,7 +120,43 @@ export default class ShaderVisitor
   }
 
   RuleFnBody(ctx: RuleFnBodyCstChildren) {
-    return ctx.RuleFnStatement?.map((item) => this.visit(item));
+    return {
+      statements: ctx.RuleFnStatement?.map((item) => this.visit(item)),
+      marcos: ctx.RuleFnMacro?.map((item) => this.visit(item)),
+    };
+  }
+
+  RuleFnMacro(children: RuleFnMacroCstChildren, param?: any) {
+    return defaultVisit.bind(this)(children);
+  }
+
+  RuleFnMacroInclude(children: RuleFnMacroIncludeCstChildren, param?: any) {
+    return {
+      line: children.m_include[0].startLine,
+      name: children.ValueString[0].image,
+    };
+  }
+
+  RuleFnMacroCondition(children: RuleFnMacroConditionCstChildren, param?: any) {
+    children.RuleFnBody;
+    return {
+      line: children.Identifier[0].startLine,
+      command: extractCstToken(children.RuleFnMacroConditionDeclare[0]),
+      identifier: children.Identifier[0].image,
+      body: this.visit(children.RuleFnBody),
+      branch:
+        children.RuleFnMacroConditionBranch &&
+        this.visit(children.RuleFnMacroConditionBranch),
+    };
+  }
+
+  RuleFnMacroConditionBranch(
+    children: RuleFnMacroConditionBranchCstChildren,
+    param?: any
+  ) {
+    return {
+      declare: extractCstToken(children.RuleFnMacroConditionBranchDeclare[0]),
+    };
   }
 
   RuleFnStatement(ctx: RuleFnStatementCstChildren) {
@@ -136,6 +176,7 @@ export default class ShaderVisitor
     );
 
     return {
+      line: ctx.LBracket[0].startLine,
       function: extractCstToken(ctx),
       args,
     };
@@ -143,6 +184,7 @@ export default class ShaderVisitor
 
   RuleFnConditionStatement(ctx: RuleFnConditionStatementCstChildren) {
     return {
+      line: ctx.if[0].startLine,
       relation: this.visit(ctx.RuleFnRelationExpr),
       body: this.visit(ctx.RuleFnBlockStatement),
     };
@@ -162,7 +204,10 @@ export default class ShaderVisitor
   }
 
   RuleFnAssignStatement(ctx: RuleFnAssignStatementCstChildren) {
+    const lo = this.visit(ctx.RuleFnAssignLO);
+
     return {
+      line: lo.line,
       asignee: this.visit(ctx.RuleFnAssignLO),
       value: this.visit(ctx.RuleFnExpression),
     };
@@ -214,21 +259,28 @@ export default class ShaderVisitor
 
   RuleFnAssignLO(ctx: RuleFnAssignLOCstChildren) {
     if (ctx.RuleFnVariable) {
-      return {
-        asignee: this.visit(ctx.RuleFnVariable),
-      };
+      return this.visit(ctx.RuleFnVariable);
     }
+
+    const token = ctx.gl_FragColor ?? ctx.gl_Position;
     return {
-      asignee: ctx.gl_FragColor?.[0].image ?? ctx.gl_Position?.[0].image,
+      asignee: token?.[0].image,
+      line: token?.[0].startLine,
     };
   }
 
   RuleFnVariable(ctx: RuleFnVariableCstChildren) {
-    return ctx.Identifier.map((item) => item.image);
+    return {
+      text: ctx.Identifier.map((item) => item.image),
+      line: ctx.Identifier[0].startLine,
+    };
   }
 
   RuleFnReturnStatement(ctx: RuleFnReturnStatementCstChildren) {
-    return { value: extractCstToken(ctx.RuleFnReturnVariable[0]) };
+    return {
+      line: ctx.return[0].startLine,
+      value: extractCstToken(ctx.RuleFnReturnVariable[0]),
+    };
   }
 
   RuleFnArg(ctx: RuleFnArgCstChildren) {
@@ -259,6 +311,7 @@ export default class ShaderVisitor
 
   RuleFnVariableDeclaration(ctx: RuleFnVariableDeclarationCstChildren) {
     return {
+      line: ctx.Identifier[0].startLine,
       type: extractCstToken(ctx.RuleVariableType[0]),
       variable: ctx.Identifier[0].image,
       default: ctx.RuleFnExpression
