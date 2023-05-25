@@ -11,6 +11,7 @@ function RuleFnVariableDeclaration(this: CstParser) {
     this.CONSUME(Symbols.Equal);
     this.SUBRULE($.RuleFnExpression);
   });
+  this.CONSUME(Symbols.Semicolon);
 }
 ALL_RULES.push({
   name: 'RuleFnVariableDeclaration',
@@ -26,7 +27,12 @@ function RuleFnStatement(this: CstParser) {
     { ALT: () => this.SUBRULE($.RuleFnVariableDeclaration) },
     { ALT: () => this.SUBRULE($.RuleFnConditionStatement) },
     { ALT: () => this.SUBRULE($.RuleFnAssignStatement) },
-    { ALT: () => this.CONSUME(Keywords.Discard) },
+    {
+      ALT: () => {
+        this.CONSUME(Keywords.Discard);
+        this.CONSUME(Symbols.Semicolon);
+      },
+    },
   ]);
 }
 ALL_RULES.push({
@@ -40,6 +46,7 @@ function RuleFnAssignStatement(this: CstParser) {
   this.SUBRULE($.RuleFnAssignLO);
   this.SUBRULE($.RuleFnAssignmentOperator);
   this.SUBRULE($.RuleFnExpression);
+  this.CONSUME(Symbols.Semicolon);
 }
 ALL_RULES.push({
   name: 'RuleFnAssignStatement',
@@ -120,6 +127,7 @@ function RuleFnReturnStatement(this: CstParser) {
 
   this.CONSUME(Keywords.Return);
   this.SUBRULE($.RuleFnReturnVariable);
+  this.CONSUME(Symbols.Semicolon);
 }
 ALL_RULES.push({ name: 'RuleFnReturnStatement', fn: RuleFnReturnStatement });
 

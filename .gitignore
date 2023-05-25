@@ -3,3 +3,5 @@ diagrams.html
 .vscode/*
 dist/*
 .DS_Store
+playground.sh
+tmp.json

@@ -47,12 +47,7 @@ function RuleFnBody(this: CstParser) {
   this.MANY(() => {
     this.OR([
       { ALT: () => this.SUBRULE($.RuleFnMacro) },
-      {
-        ALT: () => {
-          this.SUBRULE($.RuleFnStatement);
-          this.CONSUME(Symbols.Semicolon);
-        },
-      },
+      { ALT: () => this.SUBRULE($.RuleFnStatement) },
     ]);
   });
 }

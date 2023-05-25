@@ -127,6 +127,7 @@ export type RuleFnVariableDeclarationCstChildren = {
   Identifier: IToken[];
   Equal?: IToken[];
   RuleFnExpression?: RuleFnExpressionCstNode[];
+  Semicolon: IToken[];
 };
 
 export interface RuleFnStatementCstNode extends CstNode {
@@ -141,6 +142,7 @@ export type RuleFnStatementCstChildren = {
   RuleFnConditionStatement?: RuleFnConditionStatementCstNode[];
   RuleFnAssignStatement?: RuleFnAssignStatementCstNode[];
   discard?: IToken[];
+  Semicolon?: IToken[];
 };
 
 export interface RuleFnAssignStatementCstNode extends CstNode {
@@ -152,6 +154,7 @@ export type RuleFnAssignStatementCstChildren = {
   RuleFnAssignLO: RuleFnAssignLOCstNode[];
   RuleFnAssignmentOperator: RuleFnAssignmentOperatorCstNode[];
   RuleFnExpression: RuleFnExpressionCstNode[];
+  Semicolon: IToken[];
 };
 
 export interface RuleFnAssignmentOperatorCstNode extends CstNode {
@@ -218,6 +221,7 @@ export interface RuleFnReturnStatementCstNode extends CstNode {
 export type RuleFnReturnStatementCstChildren = {
   return: IToken[];
   RuleFnReturnVariable: RuleFnReturnVariableCstNode[];
+  Semicolon: IToken[];
 };
 
 export interface RuleFnReturnVariableCstNode extends CstNode {
@@ -351,7 +355,6 @@ export interface RuleFnBodyCstNode extends CstNode {
 export type RuleFnBodyCstChildren = {
   RuleFnMacro?: RuleFnMacroCstNode[];
   RuleFnStatement?: RuleFnStatementCstNode[];
-  Semicolon?: IToken[];
 };
 
 export interface RuleSubShaderCstNode extends CstNode {
@@ -384,7 +387,6 @@ export type RuleShaderPassCstChildren = {
   RuleStruct?: RuleStructCstNode[];
   SubShaderPassPropertyAssignment?: SubShaderPassPropertyAssignmentCstNode[];
   RuleRenderStateDeclaration?: RuleRenderStateDeclarationCstNode[];
-  Semicolon?: IToken[];
   RCurly: IToken[];
 };
 
@@ -569,6 +571,7 @@ export type SubShaderPassPropertyAssignmentCstChildren = {
   RuleShaderPassPropertyType: RuleShaderPassPropertyTypeCstNode[];
   Equal: IToken[];
   Identifier: IToken[];
+  Semicolon: IToken[];
 };
 
 export interface RuleShaderPassPropertyTypeCstNode extends CstNode {

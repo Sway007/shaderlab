@@ -8,6 +8,7 @@ function SubShaderPassPropertyAssignment(this: CstParser) {
   this.SUBRULE($.RuleShaderPassPropertyType);
   this.CONSUME(Symbols.Equal);
   this.CONSUME(Others.Identifier);
+  this.CONSUME(Symbols.Semicolon);
 }
 ALL_RULES.push({
   name: 'SubShaderPassPropertyAssignment',

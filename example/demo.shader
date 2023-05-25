@@ -23,7 +23,7 @@ Shader "DemoShader"
     {
       // ---------------- Pass Tag 区（可选）---------
       // 对应引擎 ShaderPass tags（可选）
-      Tags { PipelineStage = "Forward"};
+      Tags { PipelineStage = "Forward"}
       // -------------------------------------------
 
       
@@ -54,13 +54,13 @@ Shader "DemoShader"
       {
         vec4 position;
         vec2 uv;
-      };
+      }
 
       struct Varyings
       {
         vec2f uv;
         float fogCoord;
-      };
+      }
 
       vec4 material_BaseColor;
       float material_AlphaCutoff;
@@ -75,14 +75,14 @@ Shader "DemoShader"
         Enabled = true;
         SrcColorBlendFactor = material_SrcBlend;
         DestColorBlendFactor = material_DstBlend;
-      };
+      }
 
       Varyings customVertex(Attributes input, int arg2){
         Varyings varying;
         varying.uv = vec2(1.0,2.0);
         gl_Position = vec4(1.0,1.0,1.0,1.0);
         return varying;
-      };
+      }
 
       void unlitFragment(Varyings input)
       {
@@ -99,7 +99,7 @@ Shader "DemoShader"
         #ifdef MATERIAL_IS_ALPHA_CUTOFF
             if( baseColor.a < material_AlphaCutoff ) {
                 discard;
-            };
+            }
         #endif
     
         gl_FragColor = baseColor;
@@ -113,7 +113,7 @@ Shader "DemoShader"
         #ifndef ENGINE_IS_COLORSPACE_GAMMA
             gl_FragColor = linearToGamma(gl_FragColor);
         #endif
-      };
+      }
       // -----------------------------------------
     }
   }

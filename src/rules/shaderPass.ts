@@ -17,7 +17,6 @@ export function RuleShaderPass(this: CstParser) {
       { ALT: () => this.SUBRULE($.SubShaderPassPropertyAssignment) },
       { ALT: () => this.SUBRULE($.RuleRenderStateDeclaration) },
     ]);
-    this.CONSUME(Symbols.Semicolon);
   });
   this.CONSUME(Symbols.RCurly);
 }
