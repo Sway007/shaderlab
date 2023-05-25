@@ -160,9 +160,6 @@ export default class ShaderVisitor
   }
 
   RuleFnStatement(ctx: RuleFnStatementCstChildren) {
-    // ctx.RuleFnReturnStatement;
-    // ctx.RuleFnConditionStatement;
-    // ctx.
     return defaultVisit.bind(this)(ctx);
   }
 

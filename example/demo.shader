@@ -41,7 +41,7 @@ Shader "DemoShader"
       
       // ------------------ 子着色器区（必选）---------
       VertexShader = customVertex;
-      FragmentShader = customFragment;
+      FragmentShader = unlitFragment;
       // -------------------------------------------
 
       
