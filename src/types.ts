@@ -104,6 +104,7 @@ export type RuleFnCallVariableCstChildren = {
   glsl_vec4?: IToken[];
   glsl_float?: IToken[];
   glsl_sampler2D?: IToken[];
+  texture2D?: IToken[];
   Identifier?: IToken[];
 };
 
@@ -220,7 +221,9 @@ export interface RuleFnReturnStatementCstNode extends CstNode {
 
 export type RuleFnReturnStatementCstChildren = {
   return: IToken[];
-  RuleFnReturnVariable: RuleFnReturnVariableCstNode[];
+  RuleFnExpression?: RuleFnExpressionCstNode[];
+  RuleBoolean?: RuleBooleanCstNode[];
+  ValueString?: IToken[];
   Semicolon: IToken[];
 };
 
@@ -682,6 +685,16 @@ export type RuleNumberCstChildren = {
   ValueFloat?: IToken[];
 };
 
+export interface RuleBooleanCstNode extends CstNode {
+  name: "RuleBoolean";
+  children: RuleBooleanCstChildren;
+}
+
+export type RuleBooleanCstChildren = {
+  ValueTrue?: IToken[];
+  ValueFalse?: IToken[];
+};
+
 export interface RuleAddOperatorCstNode extends CstNode {
   name: "RuleAddOperator";
   children: RuleAddOperatorCstChildren;
@@ -787,6 +800,7 @@ export interface ICstNodeVisitor<IN, OUT> extends ICstVisitor<IN, OUT> {
   RuleRenderStateDeclaration(children: RuleRenderStateDeclarationCstChildren, param?: IN): OUT;
   RuleStatePropertyAssign(children: RuleStatePropertyAssignCstChildren, param?: IN): OUT;
   RuleNumber(children: RuleNumberCstChildren, param?: IN): OUT;
+  RuleBoolean(children: RuleBooleanCstChildren, param?: IN): OUT;
   RuleAddOperator(children: RuleAddOperatorCstChildren, param?: IN): OUT;
   RuleMultiplcationOperator(children: RuleMultiplcationOperatorCstChildren, param?: IN): OUT;
   RuleRelationOperator(children: RuleRelationOperatorCstChildren, param?: IN): OUT;

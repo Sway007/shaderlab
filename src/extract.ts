@@ -1,3 +1,5 @@
+import { ASCII_RESET, ASCII_WARN_COLOR } from './constants';
+
 interface IShaderInfo {
   name: string;
   subShaders: Array<ISubShader>;
@@ -26,6 +28,86 @@ interface ILineStatement {
   content: string;
 }
 
+class ScopeVariableCollector {
+  variables: Array<{ name: string; text: string }>;
+  private passAst: any;
+  private fnAstStack: Array<any> = [];
+
+  constructor() {
+    this.variables = [];
+  }
+
+  setPassAst(ast: any) {
+    this.passAst = ast;
+  }
+
+  pushFnAst(ast: any) {
+    this.fnAstStack.push(ast);
+  }
+
+  popFnAst() {
+    return this.fnAstStack.pop();
+  }
+
+  get fnAst(): any {
+    return this.fnAstStack[this.fnAstStack.length - 1];
+  }
+
+  findLocalVariable(variable: string) {
+    for (const declare of this.fnAst.body.statements ?? []) {
+      if (declare.hasOwnProperty('RuleFnVariableDeclaration')) {
+        if (declare.RuleFnVariableDeclaration.variable === variable)
+          return declare.RuleFnVariableDeclaration;
+      }
+    }
+  }
+
+  addGlobal(variable: string) {
+    const { passAst } = this;
+    if (this.variables.some((item: any) => item.name === variable))
+      return 'exist';
+    let ret = '';
+    for (const struct of passAst.structs) {
+      if (struct.name === variable) {
+        ret = serializeFnStruct(struct);
+        this.variables.push({ name: variable, text: ret });
+        break;
+      }
+    }
+    if (!ret)
+      for (const v of passAst.variables) {
+        if (v.variable === variable) {
+          ret = serializeFnVarDeclaration(v).content;
+          this.variables.push({ name: variable, text: ret });
+          break;
+        }
+      }
+    if (!ret)
+      for (const fn of passAst.functions) {
+        if (fn.name === variable) {
+          ret = serializeFunction(fn);
+          this.variables.push({ name: variable, text: ret });
+          break;
+        }
+      }
+    if (!ret)
+      console.warn(
+        ASCII_WARN_COLOR,
+        'not found global variable: ',
+        variable,
+        ASCII_RESET
+      );
+    return ret;
+  }
+
+  clear() {
+    this.variables = [];
+    this.passAst = null;
+  }
+}
+
+const scopeCollector = new ScopeVariableCollector();
+
 function extractObj(
   info: any,
   opts: { kn?: string; vn?: string; fv?: (info: any) => any } = {}
@@ -43,7 +125,95 @@ function serializeRenderState(state: any) {
 }
 
 function serializeFnArgs(args: any): string {
-  return args.map((arg: any) => `${arg.type} ${arg.name}`).join(',');
+  return args
+    .map((arg: any) => `${serializeVariableType(arg.type)} ${arg.name}`)
+    .join(',');
+}
+
+function serializeFnStruct(struct: any): string {
+  return `struct ${struct.name} {
+    ${struct.variables
+      .map(
+        (item: any) => `${item.variable} ${serializeVariableType(item.type)};`
+      )
+      .join('\n')}
+  }`;
+}
+
+function serializeVariableType(type: any): string {
+  if (type.isCustom) {
+    scopeCollector.addGlobal(type.text);
+  }
+  return type.text;
+}
+
+function serializeFnVairable(variable: any): ILineStatement {
+  const vn = variable.text[0];
+  // find variable declaration
+  if (!scopeCollector.findLocalVariable(vn)) {
+    scopeCollector.addGlobal(vn);
+  }
+
+  return {
+    line: variable.line,
+    content: variable.text.join('.'),
+  };
+}
+
+function serializeFnCallArg(arg: any): string {
+  if (arg.function) {
+    return serializeFnCall(arg).content;
+  }
+  return arg;
+}
+
+function serializeFnCall(fn: any): ILineStatement {
+  if (fn.isCustom) {
+    scopeCollector.addGlobal(fn.function);
+  }
+  return {
+    line: fn.line,
+    content: `${fn.function}(${fn.args
+      .map((item: any) => serializeFnCallArg(item))
+      .join(',')})`,
+  };
+}
+
+function serizlizeExpression(expr: any): ILineStatement | undefined {
+  if (expr.RuleFnVariable) return serializeFnVairable(expr.RuleFnVariable);
+  else if (expr.operator) {
+    return {
+      line: expr.operator.line,
+      content: `${serializeStatement(expr.operands[0])?.content} ${
+        expr.operator.text
+      } ${serializeStatement(expr.operands[1])?.content}`,
+    };
+  }
+  return serializeStatement(expr);
+}
+
+function serializeReturnStatement(ret: any): ILineStatement {
+  let expr = 'NOT IMPLEMENTED!!';
+  if (ret.value.ValueString) expr = ret.value.ValueString;
+  else if (ret.value.RuleFnExpression)
+    expr = serizlizeExpression(ret.value.RuleFnExpression)!.content;
+  else if (ret.value.RuleBoolean) expr = ret.value.RuleBoolean;
+
+  return {
+    line: ret.line,
+    content: `return ${expr};`,
+  };
+}
+
+function serializeFnVarDeclaration(declare: any): ILineStatement {
+  return {
+    line: declare.line,
+    content: `${serializeVariableType(declare.type)} ${declare.variable}${
+      declare.default
+        ? ` = ${serizlizeExpression(declare.default)?.content}`
+        : ''
+    };`,
+  };
 }
 
 function serializeByType(type: string, info: any) {
@@ -51,28 +221,25 @@ function serializeByType(type: string, info: any) {
   let line = info.line ?? 0;
   switch (type) {
     case 'RuleFnVariableDeclaration':
-      content = `${info.type} ${info.variable}${
-        info.default ? `= ${serializeStatement(info.default)?.content}` : ''
-      };`;
+      content = serializeFnVarDeclaration(info).content;
       break;
+    case 'RuleFnExpression':
+      return serizlizeExpression(info)!;
     case 'RuleFnAssignStatement':
       content = `${info.asignee.text.join('.')} = ${
         serializeStatement(info.value)?.content
       };`;
       break;
     case 'RuleFnCall':
-      content = `${info.function}(${info.args.join(',')})`;
+      content = serializeFnCall(info).content;
       break;
     case 'RuleFnReturnStatement':
-      content = `return ${info.value}`;
+      content = serializeReturnStatement(info).content;
       break;
     case 'RuleFnMacroCondition':
       content = `${info.command} ${info.identifier} 
       ${serializeFnBody(info.body)}
       #endif`;
-      break;
-    case 'RuleFnVariable':
-      content = info.text.join(',');
       break;
     case 'RuleNumber':
       content = info;
@@ -80,7 +247,7 @@ function serializeByType(type: string, info: any) {
     case 'RuleFnConditionStatement':
       content = `if (${
         serializeStatement(info.relation.operands[0])?.content
-      }} ${info.relation.operator} ${
+      } ${info.relation.operator.text} ${
         serializeStatement(info.relation.operands[1])?.content
       }){
         ${serializeFnBody(info.body)}
@@ -92,6 +259,9 @@ function serializeByType(type: string, info: any) {
     case 'RuleFnMacroInclude':
       content = `#include ${info.name}`;
       break;
+    case 'RuleFnVariable':
+      content = serializeFnVairable(info).content;
+      break;
     default:
       content = `${type} NOT IMPLEMENT!!!`;
   }
@@ -102,8 +272,8 @@ function serializeByType(type: string, info: any) {
   };
 }
 
-function serializeStatement(statement: any): ILineStatement | null {
-  if (!statement) return null;
+function serializeStatement(statement: any): ILineStatement | undefined {
+  if (!statement) return;
   let content = '!!!NOT IMPLEMENTE';
   let line = 0;
   for (const k in statement) {
@@ -146,8 +316,12 @@ function serializeFnBody(body: any): string {
 }
 
 function serializeFunction(fn: any): string {
-  return `${fn.returnType} ${fn.name}(${serializeFnArgs(fn.args)}) {
-    ${serializeFnBody(fn.body)}
+  const args = serializeFnArgs(fn.args);
+  scopeCollector.pushFnAst(fn);
+  const body = serializeFnBody(fn.body);
+  scopeCollector.popFnAst();
+  return `${fn.returnType} ${fn.name}(${args}) {
+    ${body}
   }`;
 }
 
@@ -168,6 +342,8 @@ function extractPassGlobal(passAst: any, variable: string) {
 
 function extractPass(ast: any): IShaderPass {
   const ret = {} as IShaderPass;
+  scopeCollector.clear();
+  scopeCollector.setPassAst(ast);
 
   ret.name = ast.name;
   ret.tags = extractObj(ast.tags, { kn: 'tag' });
@@ -175,10 +351,18 @@ function extractPass(ast: any): IShaderPass {
   ast.propterties.forEach((p: { type: string | number; value: string }) => {
     switch (p.type) {
       case 'VertexShader':
-        ret.vert = extractPassGlobal(ast, p.value);
+        const vert = extractPassGlobal(ast, p.value);
+        ret.vert =
+          scopeCollector.variables.map((item) => item.text).join('\n') +
+          '\n' +
+          vert;
         break;
       case 'FragmentShader':
-        ret.frag = extractPassGlobal(ast, p.value);
+        const frag = extractPassGlobal(ast, p.value);
+        ret.frag =
+          scopeCollector.variables.map((item) => item.text).join('\n') +
+          '\n' +
+          frag;
         break;
       default:
         ret.renderStates[p.type] = extractPassGlobal(ast, p.value);

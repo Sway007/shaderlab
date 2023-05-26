@@ -1,5 +1,5 @@
 import { CstParser } from 'chevrotain';
-import { Keywords, Others, Symbols, Types } from '../../tokens';
+import { Keywords, Others, Symbols, Types, Values } from '../../tokens';
 import { ALL_RULES } from '../common';
 
 function RuleFnExpression(this: CstParser) {
@@ -86,6 +86,7 @@ ALL_RULES.push({ name: 'RuleFnCall', fn: RuleFnCall });
 function RuleFnCallVariable(this: CstParser) {
   this.OR([
     ...Object.values(Types).map((item) => ({ ALT: () => this.CONSUME(item) })),
+    { ALT: () => this.CONSUME(Keywords.Texture2D) },
     { ALT: () => this.CONSUME(Others.Identifier) },
   ]);
 }

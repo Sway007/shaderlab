@@ -77,11 +77,20 @@ Shader "DemoShader"
         DestColorBlendFactor = material_DstBlend;
       }
 
-      Varyings customVertex(Attributes input, int arg2){
+      int globalFn(int arg1, int arg2) {
+        return arg1 + arg2;
+      }
+
+      Varyings customVertex(Attributes input, Attributes arg2){
         Varyings varying;
         varying.uv = vec2(1.0,2.0);
-        gl_Position = vec4(1.0,1.0,1.0,1.0);
+        float unusedV = 1.0 + undefined;
+        float unusedV2 = unused2 * undefined;
+        float unused3 = func(arg1);
+        gl_Position = vec4(1.0,1.0,1.0,globalFn(0.5, 0.5));
         return varying;
+        return true;
+        return "hello";
       }
 
       void unlitFragment(Varyings input)

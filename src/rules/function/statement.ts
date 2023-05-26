@@ -126,7 +126,12 @@ function RuleFnReturnStatement(this: CstParser) {
   const $ = this as any as IShaderParser;
 
   this.CONSUME(Keywords.Return);
-  this.SUBRULE($.RuleFnReturnVariable);
+  this.OR([
+    { ALT: () => this.SUBRULE($.RuleFnExpression) },
+    { ALT: () => this.SUBRULE($.RuleBoolean) },
+    { ALT: () => this.CONSUME(Values.ValueString) },
+  ]);
+
   this.CONSUME(Symbols.Semicolon);
 }
 ALL_RULES.push({ name: 'RuleFnReturnStatement', fn: RuleFnReturnStatement });

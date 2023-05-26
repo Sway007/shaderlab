@@ -31,6 +31,7 @@ interface IShaderParser {
   RuleStatePropertyAssign: any;
   RuleRenderStateType: any;
   RuleNumber: any;
+  RuleBoolean: any;
 
   RuleMultiplcationOperator: any;
   RuleAddOperator: any;

@@ -44,6 +44,9 @@ const M_ELIF = createKeywordToken('#elif', { name: 'm_elif' });
 const M_ENDIF = createKeywordToken('#endif', { name: 'm_endif' });
 const M_INCLUDE = createKeywordToken('#include', { name: 'm_include' });
 
+// glsl
+export const Texture2D = createKeywordToken('texture2D');
+
 export {
   Shader,
   EditorProperties,

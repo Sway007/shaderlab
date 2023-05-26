@@ -1,7 +1,7 @@
 import { CstParser } from 'chevrotain';
 import { Keywords, Others, Symbols, Types, Values } from '../tokens';
 import { ALL_RULES } from './common';
-import { ValueFloat, ValueInt } from '../tokens/value';
+import { ValueFalse, ValueFloat, ValueInt, ValueTrue } from '../tokens/value';
 
 function RuleDeclare(this: CstParser) {
   const $ = this as any as IShaderParser;
@@ -81,6 +81,14 @@ function RuleNumber(this: CstParser) {
   ]);
 }
 ALL_RULES.push({ name: 'RuleNumber', fn: RuleNumber });
+
+function RuleBoolean(this: CstParser) {
+  this.OR([
+    { ALT: () => this.CONSUME(ValueTrue) },
+    { ALT: () => this.CONSUME(ValueFalse) },
+  ]);
+}
+ALL_RULES.push({ name: 'RuleBoolean', fn: RuleBoolean });
 
 function RuleAddOperator(this: CstParser) {
   this.OR([

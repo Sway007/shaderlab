@@ -1,5 +1,6 @@
 import {
   ICstNodeVisitor,
+  RuleBooleanCstChildren,
   RuleDeclarationCstChildren,
   RuleFnAddExprCstChildren,
   RuleFnArgCstChildren,
@@ -87,14 +88,21 @@ export default class ShaderVisitor
     const propterties = ctx.SubShaderPassPropertyAssignment?.map((item) =>
       this.visit(item)
     );
-    const structs = ctx.RuleStruct?.map((item) => this.visit(item));
-    const variables = ctx.RuleFnVariableDeclaration?.map((item) =>
-      this.visit(item)
-    );
+    const structs = ctx.RuleStruct?.map((item) => {
+      const ret = this.visit(item);
+      return ret;
+    });
+    const variables = ctx.RuleFnVariableDeclaration?.map((item) => {
+      const ret = this.visit(item);
+      return ret;
+    });
     const renderStates = ctx.RuleRenderStateDeclaration?.map((item) =>
       this.visit(item)
     );
-    const functions = ctx.RuleFn?.map((item) => this.visit(item));
+    const functions = ctx.RuleFn?.map((item) => {
+      const ret = this.visit(item);
+      return ret;
+    });
 
     return {
       name: ctx.ValueString[0].image,
@@ -164,6 +172,7 @@ export default class ShaderVisitor
   }
 
   RuleFnCall(ctx: RuleFnCallCstChildren) {
+    const isCustom = !!ctx.RuleFnCallVariable[0].children.Identifier;
     const args = ctx.RuleAssignableValue?.map((item) =>
       extractCstToken(item, {
         fnNode: (node) => {
@@ -176,6 +185,7 @@ export default class ShaderVisitor
       line: ctx.LBracket[0].startLine,
       function: extractCstToken(ctx),
       args,
+      isCustom,
     };
   }
 
@@ -191,7 +201,11 @@ export default class ShaderVisitor
     const operands = ctx.RuleFnAddExpr.map((item) => this.visit(item));
 
     return {
-      operator: extractCstToken(ctx.RuleRelationOperator[0]),
+      operator: extractCstToken(ctx.RuleRelationOperator[0], {
+        fnToken(element) {
+          return { text: element.image, line: element.startLine };
+        },
+      }),
       operands,
     };
   }
@@ -221,7 +235,11 @@ export default class ShaderVisitor
       );
 
       return {
-        operator: extractCstToken(ctx.RuleAddOperator?.[0]),
+        operator: extractCstToken(ctx.RuleAddOperator?.[0], {
+          fnToken(element) {
+            return { text: element.image, line: element.startLine };
+          },
+        }),
         operands,
       };
     }
@@ -230,12 +248,14 @@ export default class ShaderVisitor
 
   RuleFnMultiplicationExpr(ctx: RuleFnMultiplicationExprCstChildren) {
     if (ctx.RuleMultiplcationOperator) {
-      const operands = ctx.RuleFnAtomicExpr?.map((item) => {
-        this.visit(item);
-      });
+      const operands = ctx.RuleFnAtomicExpr?.map((item) => this.visit(item));
 
       return {
-        operator: extractCstToken(ctx.RuleMultiplcationOperator[0]),
+        operator: extractCstToken(ctx.RuleMultiplcationOperator[0], {
+          fnToken(element) {
+            return { text: element.image, line: element.startLine };
+          },
+        }),
         operands,
       };
     }
@@ -252,6 +272,10 @@ export default class ShaderVisitor
 
   RuleNumber(ctx: RuleNumberCstChildren) {
     return extractCstToken(ctx, { fnToken: (token) => Number(token.image) });
+  }
+
+  RuleBoolean(children: RuleBooleanCstChildren, param?: any) {
+    return extractCstToken(children);
   }
 
   RuleFnAssignLO(ctx: RuleFnAssignLOCstChildren) {
@@ -276,14 +300,17 @@ export default class ShaderVisitor
   RuleFnReturnStatement(ctx: RuleFnReturnStatementCstChildren) {
     return {
       line: ctx.return[0].startLine,
-      value: extractCstToken(ctx.RuleFnReturnVariable[0]),
+      value: defaultVisit.bind(this)(ctx),
     };
   }
 
   RuleFnArg(ctx: RuleFnArgCstChildren) {
     return {
       name: ctx.Identifier[0].image,
-      type: extractCstToken(ctx.RuleVariableType[0]),
+      type: {
+        isCustom: !!ctx.RuleVariableType[0].children.Identifier,
+        text: extractCstToken(ctx.RuleVariableType[0]),
+      },
     };
   }
 
@@ -309,7 +336,10 @@ export default class ShaderVisitor
   RuleFnVariableDeclaration(ctx: RuleFnVariableDeclarationCstChildren) {
     return {
       line: ctx.Identifier[0].startLine,
-      type: extractCstToken(ctx.RuleVariableType[0]),
+      type: {
+        text: extractCstToken(ctx.RuleVariableType[0]),
+        isCustom: !!ctx.RuleVariableType[0].children.Identifier,
+      },
       variable: ctx.Identifier[0].image,
       default: ctx.RuleFnExpression
         ? this.visit(ctx.RuleFnExpression)
