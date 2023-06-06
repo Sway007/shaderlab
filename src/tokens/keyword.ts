@@ -7,6 +7,7 @@ const SubShader = createKeywordToken('SubShader');
 const Pass = createKeywordToken('Pass');
 const Tags = createKeywordToken('Tags');
 
+export const Uniform = createKeywordToken('uniform');
 export const If = createKeywordToken('if');
 export const Else = createKeywordToken('else');
 export const Discard = createKeywordToken('discard');

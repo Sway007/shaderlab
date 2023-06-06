@@ -37,10 +37,10 @@ ALL_RULES.push({
 function RuleFnAtomicExpr(this: CstParser) {
   const $ = this as any as IShaderParser;
 
+  this.OPTION(() => this.SUBRULE($.RuleAddOperator));
   this.OR([
     { ALT: () => this.SUBRULE($.RuleFnParenthesisExpr) },
     { ALT: () => this.SUBRULE($.RuleNumber) },
-    { ALT: () => this.SUBRULE($.RuleFnPowExpr) },
     { ALT: () => this.SUBRULE($.RuleFnCall) },
     { ALT: () => this.SUBRULE($.RuleFnVariable) },
   ]);
@@ -55,18 +55,6 @@ function RuleFnParenthesisExpr(this: CstParser) {
   this.CONSUME(Symbols.RBracket);
 }
 ALL_RULES.push({ name: 'RuleFnParenthesisExpr', fn: RuleFnParenthesisExpr });
-
-function RuleFnPowExpr(this: CstParser) {
-  const $ = this as any as IShaderParser;
-
-  this.CONSUME(Keywords.Pow);
-  this.CONSUME1(Symbols.LBracket);
-  this.SUBRULE($.RuleFnAddExpr);
-  this.CONSUME(Symbols.Comma);
-  this.SUBRULE2($.RuleFnAddExpr);
-  this.CONSUME(Symbols.RBracket);
-}
-ALL_RULES.push({ name: 'RuleFnPowExpr', fn: RuleFnPowExpr });
 
 function RuleFnCall(this: CstParser) {
   const $ = this as any as IShaderParser;
@@ -86,6 +74,7 @@ ALL_RULES.push({ name: 'RuleFnCall', fn: RuleFnCall });
 function RuleFnCallVariable(this: CstParser) {
   this.OR([
     ...Object.values(Types).map((item) => ({ ALT: () => this.CONSUME(item) })),
+    { ALT: () => this.CONSUME(Keywords.Pow) },
     { ALT: () => this.CONSUME(Keywords.Texture2D) },
     { ALT: () => this.CONSUME(Others.Identifier) },
   ]);

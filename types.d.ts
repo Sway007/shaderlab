@@ -22,6 +22,7 @@ interface IShaderParser {
 
   SubShaderPassPropertyAssignment: any;
   RuleShaderPassPropertyType: any;
+  RulePassUniform: any;
 
   RuleStruct: any;
   RuleDeclaration: any;
@@ -43,7 +44,6 @@ interface IShaderParser {
   RuleFnArg: any;
   RuleFnParenthesisExpr: any;
   RuleFnAddExpr: any;
-  RuleFnPowExpr: any;
   RuleFnParenthesisExpr: any;
   RuleFnAtomicExpr: any;
   RuleFnMultiplicationExpr: any;
@@ -70,4 +70,9 @@ interface IShaderParser {
   RuleFnMacroConditionDeclare: any;
   RuleFnMacroConditionBranch: any;
   RuleFnMacroConditionBranchDeclare: any;
+}
+
+declare module '*.shader' {
+  const value: string;
+  export default value;
 }

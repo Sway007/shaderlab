@@ -1,8 +1,19 @@
 import { CstParser } from 'chevrotain';
 import { ALL_RULES } from './common';
-import { Keywords, Symbols, Values } from '../tokens';
+import { Keywords, Symbols, Values, Others, Types } from '../tokens';
 
-export function RuleShaderPass(this: CstParser) {
+function RulePassUniform(this: CstParser) {
+  const $ = this as any as IShaderParser;
+
+  this.CONSUME(Keywords.Uniform);
+  this.SUBRULE($.RuleVariableType);
+  // this.CONSUME(Types.glsl_mat4);
+  this.CONSUME(Others.Identifier);
+  this.CONSUME(Symbols.Semicolon);
+}
+ALL_RULES.push({ name: 'RulePassUniform', fn: RulePassUniform });
+
+function RuleShaderPass(this: CstParser) {
   const $ = this as any as IShaderParser;
 
   this.CONSUME(Keywords.Pass);
@@ -10,12 +21,14 @@ export function RuleShaderPass(this: CstParser) {
   this.CONSUME(Symbols.LCurly);
   this.MANY(() => {
     this.OR([
-      { ALT: () => this.SUBRULE($.RuleFn) },
-      { ALT: () => this.SUBRULE($.RuleFnVariableDeclaration) },
+      { ALT: () => this.SUBRULE($.RulePassUniform) },
       { ALT: () => this.SUBRULE($.RuleTag) },
       { ALT: () => this.SUBRULE($.RuleStruct) },
+      { ALT: () => this.SUBRULE($.RuleFn) },
+      { ALT: () => this.SUBRULE($.RuleFnVariableDeclaration) },
       { ALT: () => this.SUBRULE($.SubShaderPassPropertyAssignment) },
       { ALT: () => this.SUBRULE($.RuleRenderStateDeclaration) },
+      { ALT: () => this.SUBRULE($.RuleFnMacroInclude) },
     ]);
   });
   this.CONSUME(Symbols.RCurly);

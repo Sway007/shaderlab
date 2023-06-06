@@ -8,6 +8,7 @@ import {
   Values,
 } from './tokens';
 import { ALL_RULES } from './rules';
+import { defineConfig, IConfig, config } from './ast2glsl';
 
 const allTokens = [
   Others.WhiteSpace,
@@ -16,14 +17,16 @@ const allTokens = [
   ...Object.values(Symbols),
   ...Object.values(Keywords).flat(),
   ...Object.values(Values),
-  Types.glsl_vec2f,
-  Types.glsl_vec3f,
-  Types.glsl_vec4f,
-  Types.glsl_vec2,
-  Types.glsl_vec3,
-  Types.glsl_vec4,
-  Types.glsl_float,
-  Types.glsl_sampler2D,
+  ...Object.values(Types),
+  // Types.glsl_vec2,
+  // Types.glsl_vec3,
+  // Types.glsl_vec4,
+  // Types.glsl_ivec2,
+  // Types.glsl_ivec3,
+  // Types.glsl_ivec4,
+  // Types.glsl_float,
+  // Types.glsl_sampler2D,
+
   ...Object.values(EditorTypes),
   Others.Identifier,
 ];
@@ -31,7 +34,9 @@ const allTokens = [
 export default class ShaderParser extends CstParser {
   lexer: Lexer;
 
-  constructor() {
+  constructor(config?: Partial<IConfig>) {
+    defineConfig(config);
+
     super(allTokens, { maxLookahead: 8 });
     this.lexer = new Lexer(allTokens);
     ALL_RULES.forEach((rule) => {
@@ -41,6 +46,11 @@ export default class ShaderParser extends CstParser {
   }
 
   parse(text: string) {
+    const regex = /^[ \t]*#include +"([\w\d.]+)"/gm;
+    text = text.replace(regex, (_, name) => {
+      return config.include!(name);
+    });
+
     const lexingResult = this.lexer.tokenize(text);
     this.input = lexingResult.tokens;
   }

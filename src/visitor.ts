@@ -1,5 +1,7 @@
 import {
   ICstNodeVisitor,
+  RuleAddOperatorCstChildren,
+  RuleAssignableValueCstChildren,
   RuleBooleanCstChildren,
   RuleDeclarationCstChildren,
   RuleFnAddExprCstChildren,
@@ -21,10 +23,12 @@ import {
   RuleFnParenthesisExprCstChildren,
   RuleFnRelationExprCstChildren,
   RuleFnReturnStatementCstChildren,
+  RuleFnReturnTypeCstChildren,
   RuleFnStatementCstChildren,
   RuleFnVariableCstChildren,
   RuleFnVariableDeclarationCstChildren,
   RuleNumberCstChildren,
+  RulePassUniformCstChildren,
   RulePropertyCstChildren,
   RulePropertyItemValueCstChildren,
   RuleProteryItemCstChildren,
@@ -37,6 +41,7 @@ import {
   RuleSubShaderCstChildren,
   RuleTagAssignmentCstChildren,
   RuleTagCstChildren,
+  RuleVariableTypeCstChildren,
   SubShaderPassPropertyAssignmentCstChildren,
   TupleFloat4CstChildren,
   TupleInt4CstChildren,
@@ -65,7 +70,7 @@ export default class ShaderVisitor
     const subShader = ctx.RuleSubShader?.map((item) => this.visit(item));
 
     return {
-      name: ctx.ValueString[0].image,
+      name: ctx.ValueString[0].image.replace(/"(.*)"/, '$1'),
       editorProperties,
       subShader,
     };
@@ -77,9 +82,16 @@ export default class ShaderVisitor
     const pass = ctx.RuleShaderPass?.map((item) => this.visit(item));
 
     return {
-      name: ctx.ValueString[0].image,
+      name: ctx.ValueString[0].image.replace(/"(.*)"/, '$1'),
       tags,
       pass,
+    };
+  }
+
+  RulePassUniform(children: RulePassUniformCstChildren, param?: any) {
+    return {
+      name: children.Identifier[0].image,
+      type: this.visit(children.RuleVariableType),
     };
   }
 
@@ -104,14 +116,27 @@ export default class ShaderVisitor
       return ret;
     });
 
+    const uniforms = ctx.RulePassUniform?.map((item) => this.visit(item));
+
+    // const includes = ctx.RuleFnMacroInclude?.map((item) => this.visit(item));
+
     return {
-      name: ctx.ValueString[0].image,
+      name: ctx.ValueString[0].image.replace(/"(.*)"/, '$1'),
       tags,
       propterties,
       structs,
       variables,
+      // includes,
       renderStates,
+      uniforms,
       functions,
+    };
+  }
+
+  RuleFnReturnType(children: RuleFnReturnTypeCstChildren, param?: any) {
+    return {
+      text: extractCstToken(children),
+      isCustom: !!children.RuleVariableType?.[0].children.Identifier,
     };
   }
 
@@ -120,7 +145,7 @@ export default class ShaderVisitor
     const body = this.visit(ctx.RuleFnBody);
 
     return {
-      returnType: extractCstToken(ctx.RuleFnReturnType[0]),
+      returnType: this.visit(ctx.RuleFnReturnType),
       name: ctx.Identifier[0].image,
       args,
       body,
@@ -141,7 +166,7 @@ export default class ShaderVisitor
   RuleFnMacroInclude(children: RuleFnMacroIncludeCstChildren, param?: any) {
     return {
       line: children.m_include[0].startLine,
-      name: children.ValueString[0].image,
+      name: children.ValueString[0].image.replace(/"(.*)"/, '$1'),
     };
   }
 
@@ -173,13 +198,9 @@ export default class ShaderVisitor
 
   RuleFnCall(ctx: RuleFnCallCstChildren) {
     const isCustom = !!ctx.RuleFnCallVariable[0].children.Identifier;
-    const args = ctx.RuleAssignableValue?.map((item) =>
-      extractCstToken(item, {
-        fnNode: (node) => {
-          if (node.name === 'RuleFnCall') return this.visit(node);
-        },
-      })
-    );
+    const args = ctx.RuleAssignableValue?.map((item) => {
+      return this.visit(item);
+    });
 
     return {
       line: ctx.LBracket[0].startLine,
@@ -228,6 +249,14 @@ export default class ShaderVisitor
     return this.visit(ctx.RuleFnAddExpr);
   }
 
+  RuleAddOperator(children: RuleAddOperatorCstChildren, param?: any) {
+    return extractCstToken(children, {
+      fnToken(element) {
+        return { text: element.image, line: element.startLine };
+      },
+    });
+  }
+
   RuleFnAddExpr(ctx: RuleFnAddExprCstChildren) {
     if (ctx.RuleAddOperator) {
       const operands = ctx.RuleFnMultiplicationExpr?.map((item) =>
@@ -235,12 +264,10 @@ export default class ShaderVisitor
       );
 
       return {
-        operator: extractCstToken(ctx.RuleAddOperator?.[0], {
-          fnToken(element) {
-            return { text: element.image, line: element.startLine };
-          },
-        }),
-        operands,
+        RuleFnAddExpr: {
+          operator: this.visit(ctx.RuleAddOperator),
+          operands,
+        },
       };
     }
     return this.visit(ctx.RuleFnMultiplicationExpr);
@@ -251,19 +278,23 @@ export default class ShaderVisitor
       const operands = ctx.RuleFnAtomicExpr?.map((item) => this.visit(item));
 
       return {
-        operator: extractCstToken(ctx.RuleMultiplcationOperator[0], {
-          fnToken(element) {
-            return { text: element.image, line: element.startLine };
-          },
-        }),
-        operands,
+        RuleFnMultiplicationExpr: {
+          operator: extractCstToken(ctx.RuleMultiplcationOperator[0], {
+            fnToken(element) {
+              return { text: element.image, line: element.startLine };
+            },
+          }),
+          operands,
+        },
       };
     }
     return this.visit(ctx.RuleFnAtomicExpr);
   }
 
   RuleFnAtomicExpr(ctx: RuleFnAtomicExprCstChildren) {
-    return defaultVisit.bind(this)(ctx);
+    return {
+      RuleFnAtomicExpr: defaultVisit.bind(this)(ctx),
+    };
   }
 
   RuleFnParenthesisExpr(ctx: RuleFnParenthesisExprCstChildren) {
@@ -271,7 +302,7 @@ export default class ShaderVisitor
   }
 
   RuleNumber(ctx: RuleNumberCstChildren) {
-    return extractCstToken(ctx, { fnToken: (token) => Number(token.image) });
+    return extractCstToken(ctx, { fnToken: (token) => token.image });
   }
 
   RuleBoolean(children: RuleBooleanCstChildren, param?: any) {
@@ -326,20 +357,26 @@ export default class ShaderVisitor
     };
   }
 
+  RuleAssignableValue(children: RuleAssignableValueCstChildren, param?: any) {
+    return extractCstToken(children, {
+      fnNode: (node) => {
+        if (['RuleFnMultiplicationExpr', 'RuleFnAddExpr'].includes(node.name))
+          return this.visit(node);
+      },
+    });
+  }
+
   RuleStatePropertyAssign(ctx: RuleStatePropertyAssignCstChildren) {
     return {
       name: extractCstToken(ctx.RuleStateProperty[0]),
-      value: extractCstToken(ctx.RuleAssignableValue[0]),
+      value: this.visit(ctx.RuleAssignableValue),
     };
   }
 
   RuleFnVariableDeclaration(ctx: RuleFnVariableDeclarationCstChildren) {
     return {
       line: ctx.Identifier[0].startLine,
-      type: {
-        text: extractCstToken(ctx.RuleVariableType[0]),
-        isCustom: !!ctx.RuleVariableType[0].children.Identifier,
-      },
+      type: this.visit(ctx.RuleVariableType),
       variable: ctx.Identifier[0].image,
       default: ctx.RuleFnExpression
         ? this.visit(ctx.RuleFnExpression)
@@ -356,9 +393,16 @@ export default class ShaderVisitor
     };
   }
 
+  RuleVariableType(children: RuleVariableTypeCstChildren, param?: any) {
+    return {
+      text: extractCstToken(children),
+      isCustom: !!children.Identifier,
+    };
+  }
+
   RuleDeclaration(ctx: RuleDeclarationCstChildren) {
     return {
-      type: extractCstToken(ctx.RuleVariableType[0]),
+      type: this.visit(ctx.RuleVariableType),
       variable: ctx.Identifier[0].image,
     };
   }

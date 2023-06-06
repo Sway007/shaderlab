@@ -69,9 +69,8 @@ function RuleFnAssignLO(this: CstParser) {
   const $ = this as any as IShaderParser;
 
   this.OR([
-    ...Object.values(GLKeywords).map((item) => ({
-      ALT: () => this.CONSUME(item),
-    })),
+    { ALT: () => this.CONSUME(GLKeywords.GLFragColor) },
+    { ALT: () => this.CONSUME(GLKeywords.GLPosition) },
     { ALT: () => this.SUBRULE($.RuleFnVariable) },
   ]);
 }

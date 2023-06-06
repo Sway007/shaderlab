@@ -1,5 +1,5 @@
 import { CstParser } from 'chevrotain';
-import { Keywords, Others, Symbols, Types, Values } from '../tokens';
+import { Keywords, Others, Symbols, Types } from '../tokens';
 import { ALL_RULES } from './common';
 
 function RuleStruct(this: CstParser) {

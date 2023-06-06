@@ -36,11 +36,8 @@ function RuleAssignableValue(this: CstParser) {
   this.OR([
     { ALT: () => this.CONSUME(Values.ValueTrue) },
     { ALT: () => this.CONSUME(Values.ValueFalse) },
-    { ALT: () => this.CONSUME1(Values.ValueInt) },
     { ALT: () => this.CONSUME(Values.ValueString) },
-    { ALT: () => this.CONSUME(Values.ValueFloat) },
-    { ALT: () => this.SUBRULE($.RuleFnCall) },
-    { ALT: () => this.SUBRULE($.RuleFnVariable) },
+    { ALT: () => this.SUBRULE($.RuleFnAddExpr) },
   ]);
 }
 ALL_RULES.push({ name: 'RuleAssignableValue', fn: RuleAssignableValue });
@@ -73,6 +70,14 @@ ALL_RULES.push({
   name: 'RuleStatePropertyAssign',
   fn: RuleStatePropertyAssign,
 });
+
+function RuleNumberWithSign(this: CstParser) {
+  const $ = this as any as IShaderParser;
+
+  this.OPTION(() => this.SUBRULE($.RuleAddOperator));
+  this.SUBRULE($.RuleNumber);
+}
+ALL_RULES.push({ name: 'RuleNumberWithSign', fn: RuleNumberWithSign });
 
 function RuleNumber(this: CstParser) {
   this.OR([
