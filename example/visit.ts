@@ -1,9 +1,8 @@
 import fs from 'fs';
-import ShaderParser from '../src/parser';
 import path from 'path';
 import { exit } from 'process';
-import ShaderVisitor from '../src/visitor';
-import { astExtract, defineConfig } from '../src/ast2glsl';
+import { parseShader } from '../src';
+import { defineConfig } from '../src/ast2glsl';
 
 const commonShaders: Record<string, string> = {};
 const dir = path.join(__dirname, './commonShaders');
@@ -20,45 +19,40 @@ defineConfig({
   },
 });
 
-const input = fs
-  .readFileSync(path.join(__dirname, 'particle.shader'))
-  .toString();
-const parser: ShaderParser = new ShaderParser();
-parser.parse(input);
-const cst = (parser as any).RuleShader();
-if (parser.errors.length > 0) {
-  console.log('errors: ', parser.errors);
+const input = fs.readFileSync(path.join(__dirname, 't2.shader')).toString();
+
+try {
+  const result = parseShader(input);
+  const outDir = path.resolve(__dirname, '../out');
+  if (!fs.existsSync(outDir)) {
+    fs.mkdirSync(outDir);
+  }
+  const ast = result.ast;
+  fs.writeFileSync(
+    path.join(outDir, 'ast.json'),
+    JSON.stringify(ast, null, 2),
+    {
+      flag: 'w+',
+    }
+  );
+
+  console.dir(result.shader, { depth: null });
+
+  result.shader.subShaders.forEach((item) =>
+    item.passes.forEach((pass) => {
+      const shaderDir = path.join(outDir, item.name);
+      if (!fs.existsSync(shaderDir)) {
+        fs.mkdirSync(shaderDir);
+      }
+      fs.writeFileSync(path.join(shaderDir, `${item.name}.vert`), pass.vert, {
+        flag: 'w+',
+      });
+      fs.writeFileSync(path.join(shaderDir, `${item.name}.frag`), pass.frag, {
+        flag: 'w+',
+      });
+    })
+  );
+} catch (e) {
+  console.log('errors: ', e);
   exit();
 }
-
-const visitor = new ShaderVisitor();
-const ast = visitor.visit(cst);
-
-// console.dir(ast, { depth: null });
-// config.debug = true;
-const result = astExtract(ast);
-console.dir(result, { depth: null });
-
-const outDir = path.resolve(__dirname, '../out');
-if (!fs.existsSync(outDir)) {
-  fs.mkdirSync(outDir);
-}
-
-fs.writeFileSync(path.join(outDir, 'ast.json'), JSON.stringify(ast, null, 2), {
-  flag: 'w+',
-});
-
-result.subShaders.forEach((item) =>
-  item.passes.forEach((pass) => {
-    const shaderDir = path.join(outDir, item.name);
-    if (!fs.existsSync(shaderDir)) {
-      fs.mkdirSync(shaderDir);
-    }
-    fs.writeFileSync(path.join(shaderDir, `${item.name}.vert`), pass.vert, {
-      flag: 'w+',
-    });
-    fs.writeFileSync(path.join(shaderDir, `${item.name}.frag`), pass.frag, {
-      flag: 'w+',
-    });
-  })
-);

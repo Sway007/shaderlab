@@ -1,5 +1,12 @@
 import { CstParser } from 'chevrotain';
-import { Keywords, Others, Symbols, Types, Values } from '../tokens';
+import {
+  GLKeywords,
+  Keywords,
+  Others,
+  Symbols,
+  Types,
+  Values,
+} from '../tokens';
 import { ALL_RULES } from './common';
 import { ValueFalse, ValueFloat, ValueInt, ValueTrue } from '../tokens/value';
 
@@ -38,6 +45,8 @@ function RuleAssignableValue(this: CstParser) {
     { ALT: () => this.CONSUME(Values.ValueFalse) },
     { ALT: () => this.CONSUME(Values.ValueString) },
     { ALT: () => this.SUBRULE($.RuleFnAddExpr) },
+    { ALT: () => this.CONSUME(GLKeywords.GLFragColor) },
+    { ALT: () => this.CONSUME(GLKeywords.GLPosition) },
   ]);
 }
 ALL_RULES.push({ name: 'RuleAssignableValue', fn: RuleAssignableValue });

@@ -6,6 +6,7 @@ import {
   EditorTypes,
   Keywords,
   Values,
+  GLKeywords,
 } from './tokens';
 import { ALL_RULES } from './rules';
 import { defineConfig, IConfig, config } from './ast2glsl';
@@ -18,6 +19,7 @@ const allTokens = [
   ...Object.values(Keywords).flat(),
   ...Object.values(Values),
   ...Object.values(Types),
+  ...Object.values(GLKeywords),
   // Types.glsl_vec2,
   // Types.glsl_vec3,
   // Types.glsl_vec4,
@@ -48,7 +50,7 @@ export default class ShaderParser extends CstParser {
   parse(text: string) {
     if (config.parseInclude) {
       text = config.parseInclude(text);
-    } else {
+    } else if (config.include) {
       const regex = /^[ \t]*#include +"([\w\d.]+)"/gm;
       text = text.replace(regex, (_, name) => {
         return config.include!(name);

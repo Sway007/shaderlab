@@ -1,7 +1,15 @@
+import RuntimeContext from './context';
+
 export interface IShaderInfo {
   name: string;
+  shader: IShader;
+  editorProperties: Record<string, any>;
+  context: RuntimeContext;
+  ast: any;
+}
+
+export interface IShader {
   subShaders: Array<ISubShader>;
-  // editorProperties:
 }
 
 export interface ISubShader {

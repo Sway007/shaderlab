@@ -6,3 +6,4 @@ dist/*
 playground.sh
 tmp.json
 out/*
+example/*

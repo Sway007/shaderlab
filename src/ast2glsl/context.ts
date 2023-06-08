@@ -2,10 +2,39 @@ import { ASCII_RESET, ASCII_WARN_COLOR } from '../constants';
 import { config } from './config';
 import { extractObj } from './utils';
 import { IAttribute, ILineStatement } from './types';
+import { IToken } from 'chevrotain';
 
 interface IMainFn {
   name: string;
   type: 'frag' | 'vert';
+}
+
+const enum DiagnosticSeverity {
+  /**
+   * Reports an error.
+   */
+  Error = 1,
+  /**
+   * Reports a warning.
+   */
+  Warning = 2,
+  /**
+   * Reports an information.
+   */
+  Information = 3,
+  /**
+   * Reports a hint.
+   */
+  Hint = 4,
+}
+
+export interface IException {
+  severity: DiagnosticSeverity;
+  message: string;
+  /**
+   * The token which caused the parser error.
+   */
+  token: Partial<IToken>;
 }
 
 export default class RuntimeContext {
@@ -21,6 +50,8 @@ export default class RuntimeContext {
   varyingObjName: string = '';
   // @ts-ignore
   attributes: Array<IAttribute> = [];
+
+  warnings: IException[] = [];
 
   constructor() {
     this.variables = [];
@@ -69,6 +100,10 @@ export default class RuntimeContext {
   }
 
   findLocalVariable(variable: string) {
+    for (const arg of this.fnAst.args) {
+      if (arg.name === variable) return arg;
+    }
+
     for (const declare of this.fnAst.body.statements ?? []) {
       if (declare.hasOwnProperty('RuleFnVariableDeclaration')) {
         if (declare.RuleFnVariableDeclaration.variable === variable)
@@ -80,7 +115,11 @@ export default class RuntimeContext {
   /**
    * @returns global variable ast
    */
-  findGlobal(variable: string, opts?: { pushToCtx: boolean }): any {
+  findGlobal(
+    variable: string,
+    positionInfo: any,
+    opts?: { pushToCtx: boolean }
+  ): any {
     const { passAst } = this;
     const pushToCtx = opts?.pushToCtx ?? true;
     const pushed =
@@ -110,18 +149,7 @@ export default class RuntimeContext {
         }
       }
     }
-    // if (!ret) {
-    //   for (const uniform of passAst.uniforms ?? []) {
-    //     if (uniform.name === variable) {
-    //       if (!pushed) {
-    //         const str = this.serializeUniform(uniform);
-    //         this.variables.push({ name: variable, text: str });
-    //       }
-    //       ret = uniform;
-    //       break;
-    //     }
-    //   }
-    // }
+
     if (!ret)
       for (const v of passAst.variables ?? []) {
         if (v.variable === variable) {
@@ -146,16 +174,19 @@ export default class RuntimeContext {
         }
       }
     if (!ret) {
-      if (config.debug) {
-        throw `not found global variable: ${variable}`;
-      } else {
-        console.warn(
-          ASCII_WARN_COLOR,
-          'not found global variable: ',
-          variable,
-          ASCII_RESET
-        );
+      if (variable === 'sampler2D') {
+        console.log();
       }
+      this.warnings.push({
+        severity: DiagnosticSeverity.Warning,
+        message: `not found global variable: ${variable}`,
+        token: {
+          startLine: positionInfo?.line ?? 1,
+          startColumn: 0,
+          endLine: positionInfo?.line ?? 1,
+          endColumn: 2,
+        },
+      });
     }
     return ret;
   }
@@ -163,6 +194,7 @@ export default class RuntimeContext {
   clear() {
     this.variables = [];
     this.passAst = null;
+    this.warnings = [];
   }
 
   serializeUniform(uniform: any): string {
@@ -171,7 +203,7 @@ export default class RuntimeContext {
 
   serializeVariableType(type: any): string {
     if (type.isCustom) {
-      this.findGlobal(type.text, {
+      this.findGlobal(type.text, type, {
         /** attribute */
         pushToCtx: this.mainFn?.name !== this.fnAst.name,
       });
@@ -214,7 +246,7 @@ export default class RuntimeContext {
     }
     // find variable declaration
     else if (!this.findLocalVariable(vn)) {
-      this.findGlobal(vn);
+      this.findGlobal(vn, variable);
     }
 
     return {
@@ -235,7 +267,7 @@ export default class RuntimeContext {
 
   serializeFnCall(fn: any): ILineStatement {
     if (fn.isCustom) {
-      this.findGlobal(fn.function);
+      this.findGlobal(fn.function, fn);
     }
     const content = `${fn.function}(${fn.args
       .map((item: any) => this.serializeFnCallArg(item))
@@ -304,10 +336,7 @@ export default class RuntimeContext {
       return this.serializeRuleFnVariable(asignee.RuleFnVariable);
     }
 
-    let content = asignee.text.join('.');
-    // if (asignee.text[0] === this.varyingObjName) {
-    //   content = asignee.text.slice(1).join('.');
-    // }
+    let content = asignee.asignee;
 
     return {
       line: asignee.line,
@@ -484,7 +513,9 @@ export default class RuntimeContext {
   serializeVarying(returnType: any) {
     if (!returnType.isCustom) return;
     this.varyingStructName = returnType.text;
-    const struct = this.findGlobal(returnType.text, { pushToCtx: false });
+    const struct = this.findGlobal(returnType.text, returnType, {
+      pushToCtx: false,
+    });
     if (struct?.variables) {
       struct.variables.forEach((v: any) => {
         this.addVarying({
@@ -500,7 +531,9 @@ export default class RuntimeContext {
     if (this.mainFn?.name === this.fnAst.name) {
       args.forEach((arg: any) => {
         if (arg.type.isCustom) {
-          const struct = this.findGlobal(arg.type.text, { pushToCtx: false });
+          const struct = this.findGlobal(arg.type.text, args, {
+            pushToCtx: false,
+          });
           if (struct?.variables) {
             struct.variables.forEach((v: any) => {
               this.pushAttribute({

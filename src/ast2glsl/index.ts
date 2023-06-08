@@ -3,6 +3,7 @@
 export * from './config';
 import { IShaderPass, ISubShader, IShaderInfo } from './types';
 export * from './types';
+export * from './context';
 import RuntimeContext from './context';
 import { extractObj } from './utils';
 
@@ -22,7 +23,9 @@ function extractPass(ast: any): IShaderPass {
         context.resetVaryingList();
         context.resetVariables();
         context.setMainFn({ name: p.value, type: 'vert' });
-        const vertFunc = context.findGlobal(p.value, { pushToCtx: false });
+        const vertFunc = context.findGlobal(p.value, p as any, {
+          pushToCtx: false,
+        });
         const vert = context.serializeFunction(vertFunc);
         ret.vert =
           context.attributes
@@ -42,7 +45,9 @@ function extractPass(ast: any): IShaderPass {
       case 'FragmentShader':
         context.setMainFn({ name: p.value, type: 'frag' });
         context.resetVariables();
-        const fragFunc = context.findGlobal(p.value, { pushToCtx: false });
+        const fragFunc = context.findGlobal(p.value, p as any, {
+          pushToCtx: false,
+        });
         const frag = context.serializeFunction(fragFunc);
         ret.frag =
           context.varyingList
@@ -55,7 +60,7 @@ function extractPass(ast: any): IShaderPass {
           frag;
         break;
       default:
-        ret.renderStates[p.type] = context.findGlobal(p.value, {
+        ret.renderStates[p.type] = context.findGlobal(p.value, p as any, {
           pushToCtx: false,
         });
     }
@@ -73,8 +78,13 @@ function extractSubShader(ast: any): ISubShader {
 
 export function astExtract(ast: any): IShaderInfo {
   const ret = {} as IShaderInfo;
+  ret.context = context;
+  ret.editorProperties = ast.editorProperties;
+  ret.ast = ast;
   ret.name = ast.name;
-  ret.subShaders = ast.subShader?.map((item: any) => extractSubShader(item));
+  ret.shader = {
+    subShaders: ast.subShader?.map((item: any) => extractSubShader(item)),
+  };
 
   return ret;
 }

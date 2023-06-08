@@ -17,7 +17,7 @@ const glsl_int = createToken({ name: 'glsl_int', pattern: /int/ });
 
 const glsl_sampler2D = createToken({
   name: 'glsl_sampler2D',
-  pattern: /glsl_sampler2D/,
+  pattern: /sampler2D/,
 });
 
 export {

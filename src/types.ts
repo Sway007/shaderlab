@@ -657,6 +657,8 @@ export type RuleAssignableValueCstChildren = {
   ValueFalse?: IToken[];
   ValueString?: IToken[];
   RuleFnAddExpr?: RuleFnAddExprCstNode[];
+  gl_FragColor?: IToken[];
+  gl_Position?: IToken[];
 };
 
 export interface RuleRenderStateDeclarationCstNode extends CstNode {

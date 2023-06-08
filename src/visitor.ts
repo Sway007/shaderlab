@@ -52,7 +52,7 @@ import ShaderParser from './parser';
 import { defaultVisit, extractCstToken } from './utils';
 import { ILineStatement } from './ast2glsl';
 
-const parser = new ShaderParser();
+export const parser = new ShaderParser();
 const ShaderVisitorConstructor =
   parser.getBaseCstVisitorConstructorWithDefaults();
 
