@@ -1,6 +1,7 @@
 interface IConfig {
   debug: boolean;
   include?: (name: string) => string;
+  parseInclude?: (src: string) => string;
 }
 
 let config: IConfig = {

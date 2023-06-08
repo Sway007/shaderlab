@@ -14,7 +14,7 @@ const allTokens = [
   Others.WhiteSpace,
   Others.CommnetLine,
   Others.CommentMultiLine,
-  ...Object.values(Symbols),
+  ...Symbols.tokenList,
   ...Object.values(Keywords).flat(),
   ...Object.values(Values),
   ...Object.values(Types),
@@ -46,10 +46,15 @@ export default class ShaderParser extends CstParser {
   }
 
   parse(text: string) {
-    const regex = /^[ \t]*#include +"([\w\d.]+)"/gm;
-    text = text.replace(regex, (_, name) => {
-      return config.include!(name);
-    });
+    if (config.parseInclude) {
+      text = config.parseInclude(text);
+    } else {
+      const regex = /^[ \t]*#include +"([\w\d.]+)"/gm;
+      text = text.replace(regex, (_, name) => {
+        return config.include!(name);
+      });
+    }
+    // console.log('text: ', text);
 
     const lexingResult = this.lexer.tokenize(text);
     this.input = lexingResult.tokens;

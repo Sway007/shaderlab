@@ -58,6 +58,8 @@ function RuleFnAssignmentOperator(this: CstParser) {
     { ALT: () => this.CONSUME(Symbols.Equal) },
     { ALT: () => this.CONSUME(Symbols.MultiEqual) },
     { ALT: () => this.CONSUME(Symbols.DivideEqual) },
+    { ALT: () => this.CONSUME(Symbols.AddEqual) },
+    { ALT: () => this.CONSUME(Symbols.MinusEqual) },
   ]);
 }
 ALL_RULES.push({
@@ -104,17 +106,15 @@ function RuleFnConditionStatement(this: CstParser) {
   this.CONSUME1(Symbols.LBracket);
   this.SUBRULE($.RuleFnRelationExpr);
   this.CONSUME(Symbols.RBracket);
+  this.SUBRULE($.RuleFnBlockStatement);
+  this.MANY(() => {
+    this.CONSUME(Keywords.Else);
+    this.SUBRULE($.RuleFnConditionStatement);
+  });
   this.OPTION(() => {
-    this.MANY(() => {
-      this.CONSUME(Keywords.Else);
-      this.CONSUME1(Keywords.If);
-      this.SUBRULE($.RuleFnBlockStatement);
-    });
-  });
-  this.OPTION1(() => {
     this.CONSUME1(Keywords.Else);
+    this.SUBRULE1($.RuleFnBlockStatement);
   });
-  this.SUBRULE1($.RuleFnBlockStatement);
 }
 ALL_RULES.push({
   name: 'RuleFnConditionStatement',

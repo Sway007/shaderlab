@@ -20,7 +20,9 @@ defineConfig({
   },
 });
 
-const input = fs.readFileSync(path.join(__dirname, 't2.shader')).toString();
+const input = fs
+  .readFileSync(path.join(__dirname, 'particle.shader'))
+  .toString();
 const parser: ShaderParser = new ShaderParser();
 parser.parse(input);
 const cst = (parser as any).RuleShader();
@@ -32,7 +34,7 @@ if (parser.errors.length > 0) {
 const visitor = new ShaderVisitor();
 const ast = visitor.visit(cst);
 
-console.dir(ast, { depth: null });
+// console.dir(ast, { depth: null });
 // config.debug = true;
 const result = astExtract(ast);
 console.dir(result, { depth: null });
@@ -41,6 +43,11 @@ const outDir = path.resolve(__dirname, '../out');
 if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir);
 }
+
+fs.writeFileSync(path.join(outDir, 'ast.json'), JSON.stringify(ast, null, 2), {
+  flag: 'w+',
+});
+
 result.subShaders.forEach((item) =>
   item.passes.forEach((pass) => {
     const shaderDir = path.join(outDir, item.name);

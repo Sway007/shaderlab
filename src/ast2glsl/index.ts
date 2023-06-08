@@ -1,7 +1,8 @@
 // target: glsl 100
 
-import { defineConfig, config } from './config';
 export * from './config';
+import { IShaderPass, ISubShader, IShaderInfo } from './types';
+export * from './types';
 import RuntimeContext from './context';
 import { extractObj } from './utils';
 
@@ -24,9 +25,15 @@ function extractPass(ast: any): IShaderPass {
         const vertFunc = context.findGlobal(p.value, { pushToCtx: false });
         const vert = context.serializeFunction(vertFunc);
         ret.vert =
-          context.attributes.map((item) => item.content).join('\n') +
+          context.attributes
+            .filter((item) => item.used)
+            .map((item) => item.content)
+            .join('\n') +
           '\n' +
-          context.varyingList.join('\n') +
+          context.varyingList
+            .filter((item) => item.used)
+            .map((item) => item.text)
+            .join('\n') +
           '\n' +
           context.variables.map((item) => item.text).join('\n') +
           '\n' +
@@ -38,7 +45,10 @@ function extractPass(ast: any): IShaderPass {
         const fragFunc = context.findGlobal(p.value, { pushToCtx: false });
         const frag = context.serializeFunction(fragFunc);
         ret.frag =
-          context.varyingList.join('\n') +
+          context.varyingList
+            .filter((item) => item.used)
+            .map((item) => item.text)
+            .join('\n') +
           '\n' +
           context.variables.map((item) => item.text).join('\n') +
           '\n' +

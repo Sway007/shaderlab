@@ -160,6 +160,8 @@ export type RuleFnAssignmentOperatorCstChildren = {
   Equal?: IToken[];
   MultiEqual?: IToken[];
   DivideEqual?: IToken[];
+  AddEqual?: IToken[];
+  MinusEqual?: IToken[];
 };
 
 export interface RuleFnAssignLOCstNode extends CstNode {
@@ -200,11 +202,12 @@ export interface RuleFnConditionStatementCstNode extends CstNode {
 }
 
 export type RuleFnConditionStatementCstChildren = {
-  if: (IToken)[];
+  if: IToken[];
   LBracket: (IToken)[];
   RuleFnRelationExpr: RuleFnRelationExprCstNode[];
-  else?: (IToken)[];
   RuleFnBlockStatement: (RuleFnBlockStatementCstNode)[];
+  else?: (IToken)[];
+  RuleFnConditionStatement?: RuleFnConditionStatementCstNode[];
 };
 
 export interface RuleFnReturnStatementCstNode extends CstNode {
@@ -295,6 +298,7 @@ export interface RuleFnMacroDefineCstNode extends CstNode {
 export type RuleFnMacroDefineCstChildren = {
   m_define: IToken[];
   Identifier: IToken[];
+  RuleAssignableValue?: RuleAssignableValueCstNode[];
 };
 
 export interface RuleFnMacroIncludeCstNode extends CstNode {
@@ -397,6 +401,7 @@ export type RuleShaderPassCstChildren = {
   SubShaderPassPropertyAssignment?: SubShaderPassPropertyAssignmentCstNode[];
   RuleRenderStateDeclaration?: RuleRenderStateDeclarationCstNode[];
   RuleFnMacroInclude?: RuleFnMacroIncludeCstNode[];
+  RuleFnMacroDefine?: RuleFnMacroDefineCstNode[];
   RCurly: IToken[];
 };
 

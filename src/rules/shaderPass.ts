@@ -29,6 +29,7 @@ function RuleShaderPass(this: CstParser) {
       { ALT: () => this.SUBRULE($.SubShaderPassPropertyAssignment) },
       { ALT: () => this.SUBRULE($.RuleRenderStateDeclaration) },
       { ALT: () => this.SUBRULE($.RuleFnMacroInclude) },
+      { ALT: () => this.SUBRULE($.RuleFnMacroDefine) },
     ]);
   });
   this.CONSUME(Symbols.RCurly);

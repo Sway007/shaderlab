@@ -5,7 +5,6 @@ import shebang from 'rollup-plugin-preserve-shebang';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import dts from 'rollup-plugin-dts';
-import { string } from 'rollup-plugin-string';
 
 export default defineConfig([
   {
@@ -30,9 +29,6 @@ export default defineConfig([
       commonjs({
         include: /node_modules/,
         requireReturnsDefault: 'auto', // <---- this solves default issue
-      }),
-      string({
-        include: '**/*.shader',
       }),
     ],
   },

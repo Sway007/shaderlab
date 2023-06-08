@@ -18,6 +18,7 @@ import {
   RuleFnMacroConditionBranchCstChildren,
   RuleFnMacroConditionCstChildren,
   RuleFnMacroCstChildren,
+  RuleFnMacroDefineCstChildren,
   RuleFnMacroIncludeCstChildren,
   RuleFnMultiplicationExprCstChildren,
   RuleFnParenthesisExprCstChildren,
@@ -27,6 +28,7 @@ import {
   RuleFnStatementCstChildren,
   RuleFnVariableCstChildren,
   RuleFnVariableDeclarationCstChildren,
+  RuleMultiplcationOperatorCstChildren,
   RuleNumberCstChildren,
   RulePassUniformCstChildren,
   RulePropertyCstChildren,
@@ -48,6 +50,7 @@ import {
 } from './types';
 import ShaderParser from './parser';
 import { defaultVisit, extractCstToken } from './utils';
+import { ILineStatement } from './ast2glsl';
 
 const parser = new ShaderParser();
 const ShaderVisitorConstructor =
@@ -118,7 +121,7 @@ export default class ShaderVisitor
 
     const uniforms = ctx.RulePassUniform?.map((item) => this.visit(item));
 
-    // const includes = ctx.RuleFnMacroInclude?.map((item) => this.visit(item));
+    const defines = ctx.RuleFnMacroDefine?.map((item) => this.visit(item));
 
     return {
       name: ctx.ValueString[0].image.replace(/"(.*)"/, '$1'),
@@ -126,7 +129,7 @@ export default class ShaderVisitor
       propterties,
       structs,
       variables,
-      // includes,
+      defines,
       renderStates,
       uniforms,
       functions,
@@ -161,6 +164,18 @@ export default class ShaderVisitor
 
   RuleFnMacro(children: RuleFnMacroCstChildren, param?: any) {
     return defaultVisit.bind(this)(children);
+  }
+
+  RuleFnMacroDefine(children: RuleFnMacroDefineCstChildren, param?: any) {
+    const value = children.RuleAssignableValue
+      ? this.visit(children.RuleAssignableValue)
+      : undefined;
+
+    return {
+      line: children.Identifier[0].startLine,
+      variable: children.Identifier[0].image,
+      value,
+    };
   }
 
   RuleFnMacroInclude(children: RuleFnMacroIncludeCstChildren, param?: any) {
@@ -211,10 +226,19 @@ export default class ShaderVisitor
   }
 
   RuleFnConditionStatement(ctx: RuleFnConditionStatementCstChildren) {
+    const elseBranches = ctx.RuleFnBlockStatement.map((item) =>
+      this.visit(item)
+    ).sort((a, b) => a.line - b.line);
+    const elseIfBranches = ctx.RuleFnConditionStatement?.map((item) =>
+      this.visit(item)
+    ).sort((a, b) => a.line - b.line);
+
     return {
       line: ctx.if[0].startLine,
       relation: this.visit(ctx.RuleFnRelationExpr),
-      body: this.visit(ctx.RuleFnBlockStatement),
+      // body: this.visit(ctx.RuleFnBlockStatement),
+      elseBranches,
+      elseIfBranches,
     };
   }
 
@@ -239,7 +263,8 @@ export default class ShaderVisitor
     const lo = this.visit(ctx.RuleFnAssignLO);
 
     return {
-      line: lo.line,
+      line: ctx.Semicolon[0].startLine,
+      operator: extractCstToken(ctx.RuleFnAssignmentOperator[0]),
       asignee: this.visit(ctx.RuleFnAssignLO),
       value: this.visit(ctx.RuleFnExpression),
     };
@@ -265,12 +290,25 @@ export default class ShaderVisitor
 
       return {
         RuleFnAddExpr: {
-          operator: this.visit(ctx.RuleAddOperator),
+          operators: ctx.RuleAddOperator.map((item) => this.visit(item)),
           operands,
         },
       };
     }
-    return this.visit(ctx.RuleFnMultiplicationExpr);
+    return {
+      RuleFnMultiplicationExpr: this.visit(ctx.RuleFnMultiplicationExpr),
+    };
+  }
+
+  RuleMultiplcationOperator(
+    children: RuleMultiplcationOperatorCstChildren,
+    param?: any
+  ): ILineStatement {
+    return extractCstToken(children, {
+      fnToken(element) {
+        return { text: element.image, line: element.startLine };
+      },
+    });
   }
 
   RuleFnMultiplicationExpr(ctx: RuleFnMultiplicationExprCstChildren) {
@@ -279,11 +317,9 @@ export default class ShaderVisitor
 
       return {
         RuleFnMultiplicationExpr: {
-          operator: extractCstToken(ctx.RuleMultiplcationOperator[0], {
-            fnToken(element) {
-              return { text: element.image, line: element.startLine };
-            },
-          }),
+          operators: ctx.RuleMultiplcationOperator.map((item) =>
+            this.visit(item)
+          ),
           operands,
         },
       };
@@ -311,7 +347,7 @@ export default class ShaderVisitor
 
   RuleFnAssignLO(ctx: RuleFnAssignLOCstChildren) {
     if (ctx.RuleFnVariable) {
-      return this.visit(ctx.RuleFnVariable);
+      return { RuleFnVariable: this.visit(ctx.RuleFnVariable) };
     }
 
     const token = ctx.gl_FragColor ?? ctx.gl_Position;

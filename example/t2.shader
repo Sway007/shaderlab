@@ -24,12 +24,17 @@ Shader "Water" {
       VertexShader = vert;
       FragmentShader = frag;
 
-      #include "c3.shader"
+    #include <common>
+
+    //   vec4 linearToGamma(vec4 linearIn) {
+    //       return vec4(pow(linearIn.rgb, vec3(1.0 / 2.2)), linearIn.a);
+    // }
 
       v2f vert(a2v v) {
         v2f o;
 
         o.v_uv = v.TEXCOORD_0;
+        // 暂不支持 0.v_position = (u_MVPMat * POSITION).xyz写法
         vec4 tmp = u_MVPMat * POSITION;
         o.v_position = tmp.xyz;
         gl_Position = u_MVPMat * v.POSITION;

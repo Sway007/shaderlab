@@ -60,8 +60,13 @@ ALL_RULES.push({
 });
 
 function RuleFnMacroDefine(this: CstParser) {
+  const $ = this as any as IShaderParser;
+
   this.CONSUME(Keywords.M_DEFINE);
   this.CONSUME(Others.Identifier);
+  this.OPTION(() => {
+    this.SUBRULE($.RuleAssignableValue);
+  });
 }
 ALL_RULES.push({ name: 'RuleFnMacroDefine', fn: RuleFnMacroDefine });
 

@@ -30,6 +30,16 @@ const DivideEqual = createToken({
   pattern: /\/=/,
   label: '/=',
 });
+const AddEqual = createToken({
+  name: 'AddEqual',
+  pattern: /\+=/,
+  label: '+=',
+});
+const MinusEqual = createToken({
+  name: 'MinusEqual',
+  pattern: /\-=/,
+  label: '-=',
+});
 const Mutiply = createToken({ name: 'Multiply', pattern: /\*/, label: '*' });
 const Divide = createToken({ name: 'Divide', pattern: /\//, label: '/' });
 export const GreaterThan = createToken({
@@ -52,10 +62,34 @@ export {
   Colon,
   Equal,
   Semicolon,
-  Add,
-  Minus,
   MultiEqual,
   DivideEqual,
+  AddEqual,
+  MinusEqual,
+  Add,
+  Minus,
   Mutiply,
   Divide,
 };
+
+export const tokenList = [
+  LCurly,
+  RCurly,
+  LBracket,
+  RBracket,
+  Comma,
+  Colon,
+  Equal,
+  Semicolon,
+  MultiEqual,
+  DivideEqual,
+  AddEqual,
+  MinusEqual,
+  Add,
+  Minus,
+  Mutiply,
+  Divide,
+  Dot,
+  GreaterThan,
+  LessThan,
+];

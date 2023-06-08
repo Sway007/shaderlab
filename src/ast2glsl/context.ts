@@ -1,6 +1,7 @@
 import { ASCII_RESET, ASCII_WARN_COLOR } from '../constants';
 import { config } from './config';
 import { extractObj } from './utils';
+import { IAttribute, ILineStatement } from './types';
 
 interface IMainFn {
   name: string;
@@ -14,10 +15,10 @@ export default class RuntimeContext {
   private fnAstStack: Array<any> = [];
   // current main function name
   mainFn?: IMainFn;
-  varyingList: Array<string> = [];
+  varyingList: Array<{ variable: string; text: string; used: boolean }> = [];
   // vertex shader varying type
-  varyingType: string = '';
-  varyingObj: string = '';
+  varyingStructName: string = '';
+  varyingObjName: string = '';
   // @ts-ignore
   attributes: Array<IAttribute> = [];
 
@@ -38,8 +39,8 @@ export default class RuntimeContext {
   }
 
   resetVaryingList() {
-    this.varyingObj = '';
-    this.varyingType = '';
+    this.varyingObjName = '';
+    this.varyingStructName = '';
     this.varyingList = [];
   }
 
@@ -63,8 +64,8 @@ export default class RuntimeContext {
     return this.fnAstStack[this.fnAstStack.length - 1];
   }
 
-  addVarying(varying: string) {
-    this.varyingList.push(varying);
+  addVarying(v: { variable: string; text: string }) {
+    this.varyingList.push({ ...v, used: false });
   }
 
   findLocalVariable(variable: string) {
@@ -97,17 +98,30 @@ export default class RuntimeContext {
       }
     }
     if (!ret) {
-      for (const uniform of passAst.uniforms ?? []) {
-        if (uniform.name === variable) {
-          if (!pushed) {
-            const str = this.serializeUniform(uniform);
+      for (const df of passAst.defines ?? []) {
+        if (df.variable === variable) {
+          if (pushToCtx && !pushed) {
+            const dv = df.value
+              ? this.serializeRuleFnAtomicExpr(df.value).content
+              : '';
+            const str = `#define ${df.variable} ${dv}`;
             this.variables.push({ name: variable, text: str });
           }
-          ret = uniform;
-          break;
         }
       }
     }
+    // if (!ret) {
+    //   for (const uniform of passAst.uniforms ?? []) {
+    //     if (uniform.name === variable) {
+    //       if (!pushed) {
+    //         const str = this.serializeUniform(uniform);
+    //         this.variables.push({ name: variable, text: str });
+    //       }
+    //       ret = uniform;
+    //       break;
+    //     }
+    //   }
+    // }
     if (!ret)
       for (const v of passAst.variables ?? []) {
         if (v.variable === variable) {
@@ -185,10 +199,17 @@ export default class RuntimeContext {
     let content = variable.text.join('.');
 
     // varying or attribute, remove prefix
-    if (
-      vn === this.varyingObj ||
-      this.attributes.some((item) => item.objVariable === vn)
-    ) {
+    if (vn === this.varyingObjName) {
+      const usedV = this.varyingList.find(
+        (item) => item.variable === variable.text[1]
+      );
+      usedV && (usedV.used = true);
+      content = variable.text.slice(1).join('.');
+    } else if (this.attributes.some((item) => item.objVariable === vn)) {
+      const usedA = this.attributes.find(
+        (item) => item.variable === variable.text[1]
+      );
+      usedA && (usedA.used = true);
       content = variable.text.slice(1).join('.');
     }
     // find variable declaration
@@ -258,11 +279,11 @@ export default class RuntimeContext {
   }
 
   serializeRuleFnVariableDeclaration(declare: any): ILineStatement {
-    // discard varying struct declaration
-    if (declare.type.text === this.varyingType) {
-      this.varyingObj = declare.variable;
+    // discard varying struct declaration. e.g. v2f 0;
+    if (declare.type.text === this.varyingStructName) {
+      this.varyingObjName = declare.variable;
       return {
-        line: 0,
+        line: -1,
         content: '',
       };
     }
@@ -279,10 +300,14 @@ export default class RuntimeContext {
   }
 
   serializeFnAsignee(asignee: any): ILineStatement {
-    let content = asignee.text.join('.');
-    if (asignee.text[0] === this.varyingObj) {
-      content = asignee.text.slice(1).join('.');
+    if (asignee.RuleFnVariable) {
+      return this.serializeRuleFnVariable(asignee.RuleFnVariable);
     }
+
+    let content = asignee.text.join('.');
+    // if (asignee.text[0] === this.varyingObjName) {
+    //   content = asignee.text.slice(1).join('.');
+    // }
 
     return {
       line: asignee.line,
@@ -290,13 +315,20 @@ export default class RuntimeContext {
     };
   }
 
-  serializeRuleFnAddExpr(expr: any): ILineStatement {
-    return {
-      line: expr.operator.line,
-      content: expr.operands
-        .map((item: any) => this.serializeStatement(item)?.content)
-        .join(expr.operator.text),
-    };
+  serializeRuleFnAddExpr(expr: any) {
+    if (expr.operands?.length > 0) {
+      let content = this.serializeStatement(expr.operands[0])!.content;
+      for (let i = 1; i < expr.operands.length; i++) {
+        content += ` ${expr.operators[i - 1].text} ${
+          this.serializeStatement(expr.operands[i])!.content
+        }`;
+      }
+      return {
+        line: expr.operators[0].line,
+        content,
+      };
+    }
+    return this.serializeStatement(expr);
   }
 
   serializeByType(type: string, info: any) {
@@ -312,9 +344,9 @@ export default class RuntimeContext {
       case 'RuleFnExpression':
         return this.serializeExpression(info)!;
       case 'RuleFnAssignStatement':
-        content = `${this.serializeFnAsignee(info.asignee).content} = ${
-          this.serializeStatement(info.value)?.content
-        };`;
+        content = `${this.serializeFnAsignee(info.asignee).content} ${
+          info.operator
+        } ${this.serializeStatement(info.value)?.content};`;
         break;
       case 'RuleFnCall':
         content = this.serializeFnCall(info).content;
@@ -331,13 +363,7 @@ export default class RuntimeContext {
         content = info;
         break;
       case 'RuleFnConditionStatement':
-        content = `if (${
-          this.serializeStatement(info.relation.operands[0])?.content
-        } ${info.relation.operator.text} ${
-          this.serializeStatement(info.relation.operands[1])?.content
-        }){
-          ${this.serializeFnBody(info.body)}
-        }`;
+        content = this.serializeRuleFnConditionStatement(info).content;
         break;
       case 'discard':
         content = 'discard;';
@@ -351,9 +377,14 @@ export default class RuntimeContext {
       case 'RuleAddOperator':
         content = info.text;
         break;
+      case 'RuleFnParenthesisExpr':
+        content = `(${
+          this.serializeRuleFnAddExpr(info.RuleFnAddExpr)?.content
+        })`;
+        break;
       case 'RuleFnAddExpr':
       case 'RuleFnMultiplicationExpr':
-        content = this.serializeRuleFnAddExpr(info).content;
+        content = this.serializeRuleFnAddExpr(info)!.content;
         break;
       default:
         content = `${type} NOT IMPLEMENT!!!`;
@@ -363,6 +394,32 @@ export default class RuntimeContext {
       line,
       content,
     };
+  }
+
+  serializeRuleFnConditionStatement(statement: any): ILineStatement {
+    const line = statement.line;
+    let content = `if (${
+      this.serializeStatement(statement.relation.operands[0])?.content
+    } ${statement.relation.operator.text} ${
+      this.serializeStatement(statement.relation.operands[1])?.content
+    }){
+      ${this.serializeFnBody(statement.elseBranches[0])}
+    }`;
+
+    if (statement.elseIfBranches?.length > 0) {
+      const elifBranches = statement.elseIfBranches.map((item: any) => {
+        return `else ${this.serializeRuleFnConditionStatement(item)}`;
+      });
+      content += elifBranches.join('\n');
+    }
+
+    if (statement.elseBranches[1]) {
+      content += `else {
+        ${this.serializeFnBody(statement.elseBranches[1])}
+      }`;
+    }
+
+    return { line, content };
   }
 
   serializeRuleFnAtomicExpr(expr: any): ILineStatement {
@@ -405,6 +462,9 @@ export default class RuntimeContext {
 
   serializeFnBody(body: any): string {
     const ret: Array<{ line: number; content: string }> = [];
+    if (!body) {
+      debugger;
+    }
     for (const statement of body.statements ?? []) {
       const info = this.serializeStatement(statement);
       info && ret.push(info);
@@ -423,11 +483,14 @@ export default class RuntimeContext {
 
   serializeVarying(returnType: any) {
     if (!returnType.isCustom) return;
-    this.varyingType = returnType.text;
+    this.varyingStructName = returnType.text;
     const struct = this.findGlobal(returnType.text, { pushToCtx: false });
     if (struct?.variables) {
       struct.variables.forEach((v: any) => {
-        this.addVarying(`varying ${v.type.text} ${v.variable};`);
+        this.addVarying({
+          variable: v.variable,
+          text: `varying ${v.type.text} ${v.variable};`,
+        });
       });
     }
   }
@@ -445,6 +508,7 @@ export default class RuntimeContext {
                 variable: v.variable,
                 objVariable: arg.name,
                 content: `attribute ${v.type.text} ${v.variable};`,
+                used: false,
               });
             });
           }
@@ -453,6 +517,7 @@ export default class RuntimeContext {
             type: arg.type.text,
             variable: arg.name,
             content: `attribute ${arg.type.text} ${arg.name};`,
+            used: false,
           });
         }
       });
