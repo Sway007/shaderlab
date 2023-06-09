@@ -14,7 +14,7 @@
     "example": "ts-node example/visit.ts",
     "build": "rollup -c",
     "clear": "rm -rf dist/*",
-    "release": "standard-version"
+    "release": "standard-version && git push origin --tags"
   },
   "keywords": [
     "galacean",
